@@ -3,17 +3,34 @@
 #include <GL/gl.h>
 #include <wx/colour.h>
 #include <wx/wx.h>
+#include "shared.hpp"
 
 namespace genetic_gui
 {
-    
-BEGIN_EVENT_TABLE(Plot, wxGLCanvas)
-    EVT_PAINT(Plot::Render)
-END_EVENT_TABLE()
-
-    Plot::Plot(wxWindow *parent): wxGLCanvas(parent, wxID_ANY, nullptr, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE), context(this)
+    Plot::Plot(wxWindow *parent)
+    : wxGLCanvas(
+        parent, wxID_ANY, 
+        settings.gl_attribs[0] == 0 ? nullptr : settings.gl_attribs,  
+        wxDefaultPosition, 
+        wxDefaultSize, 
+        wxFULL_REPAINT_ON_RESIZE), context(this)
     {
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    }
+
+    void Plot::RenderGrid()
+    {
+
+    }
+
+    void Plot::RenderAxes()
+    {
+        
+    }
+
+    void Plot::RenderData()
+    {
+        
     }
 
     void Plot::Render(wxPaintEvent &evt)
@@ -31,11 +48,19 @@ END_EVENT_TABLE()
         glViewport(0, 0, win_size.x, win_size.y);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0, win_size.x, win_size.y, 0, 0, 1);
+        glOrtho(visible_left, visible_right, visible_bottom, visible_top, -1, 1);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
+
+        RenderGrid();
+        RenderAxes();
+        RenderData();
 
         glFlush();
         SwapBuffers();
     }
+
+    BEGIN_EVENT_TABLE(Plot, wxGLCanvas)
+        EVT_PAINT(Plot::Render)
+    END_EVENT_TABLE()
 }

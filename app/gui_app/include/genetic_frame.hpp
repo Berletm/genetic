@@ -14,7 +14,9 @@ namespace genetic_gui
     private:
         wxStatusBar *statusbar;
         wxMenuBar   *menubar;
+        wxMenu      *file;
         wxMenu      *settings;
+
         wxBoxSizer  *plot_sizer;
         wxPanel     *plot_panel;
         Plot        *plot;
@@ -24,4 +26,4 @@ namespace genetic_gui
     };
 }
 
-#endif
+#endif // GENETIC_FRAME_HPP
