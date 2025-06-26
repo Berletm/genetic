@@ -1,10 +1,14 @@
 #include <generator.hpp>
 #include <iostream>
 
+genetic::Polynomial poly;
+
 static double left, right;
 
 int main(int argc, char* argv[])
 {
+    poly.poly.push_back({1, 2});
+
     if (argc > 2)
     {
         left  = atof(argv[1]);
@@ -17,9 +21,7 @@ int main(int argc, char* argv[])
 
     genetic::Individ individ = genetic::generate_individ(intervals);
 
-    for (const auto& gene: individ.chromosome)
-    {
-        std::cout << gene.height << std::endl;
-    }
+    std::cout << genetic::fitness(poly, individ) << std::endl;
+    
     return 0;
 }
