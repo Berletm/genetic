@@ -1,9 +1,12 @@
 #include <generator.hpp>
+#include <selection.hpp>
 #include <iostream>
 
 genetic::Polynomial poly;
 
 static double left, right;
+
+static int chromosome_size = 10, generation_size = 10;
 
 int main(int argc, char* argv[])
 {
@@ -17,11 +20,18 @@ int main(int argc, char* argv[])
 
     genetic::Partition intervals;
 
-    intervals = genetic::interval_partition(left, right);
+    intervals = genetic::interval_partition(chromosome_size, left, right);
 
-    genetic::Individ individ = genetic::generate_individ(intervals);
+    genetic::Generation generation;
+    generation = genetic::generate_generation(generation_size, chromosome_size, intervals);
+    
+    genetic::measure_generation(poly, generation);
+    genetic::Generation offspring = genetic::selection(generation, genetic::roulette_rule);
 
-    std::cout << genetic::fitness(poly, individ) << std::endl;
+    for (const auto individ: offspring)
+    {
+        std::cout << individ.fitness << std::endl;
+    }
     
     return 0;
 }

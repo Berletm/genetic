@@ -3,13 +3,11 @@
 
 #include <utility>
 #include <vector>
+#include <limits>
 #include <math.h>
 
 #define MAX_HEIGHT 20
 #define MIN_HEIGHT -MAX_HEIGHT
-
-#define CHROMOSOME_SIZE 10
-#define GENERATION_SIZE 100
 
 namespace genetic
 {
@@ -22,6 +20,8 @@ namespace genetic
     struct Individ
     {
         std::vector<Gene> chromosome;
+
+        double fitness = std::numeric_limits<double>::infinity();
 
         // crossover operator
         Individ operator+(const Individ &other);
@@ -42,10 +42,7 @@ namespace genetic
         {
             double res = 0;
 
-            for (const auto& monomial: poly)
-            {
-                res += monomial.coefficient * pow(x, monomial.power);
-            }
+            for (const auto& monomial: poly) res += monomial.coefficient * pow(x, monomial.power);
 
             return res;
         };
