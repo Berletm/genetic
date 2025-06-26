@@ -1,5 +1,5 @@
-#ifndef GENERATOR
-#define GENERATOR
+#ifndef GENERATOR_HPP
+#define GENERATOR_HPP
 
 #include "utils.hpp"
 
@@ -13,4 +13,5 @@ namespace genetic
     
     Generation generate_generation(const Partition& interval_partition);
 }
-#endif
+
+#endif // GENERATOR_HPP

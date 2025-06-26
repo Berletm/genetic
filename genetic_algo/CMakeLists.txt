@@ -1,5 +1,4 @@
-add_library(
-    genetic
+add_library(genetic
     src/generator.cpp
     
     include/utils.hpp
