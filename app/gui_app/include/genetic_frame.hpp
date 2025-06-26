@@ -3,6 +3,7 @@
 
 #include <wx-3.2/wx/frame.h>
 #include <wx-3.2/wx/wx.h>
+#include "plot.hpp"
 
 namespace genetic_gui
 {
@@ -11,6 +12,14 @@ namespace genetic_gui
     public:
         GeneticFrame();
     private:
+        wxStatusBar *statusbar;
+        wxMenuBar   *menubar;
+        wxMenu      *settings;
+        wxBoxSizer  *plot_sizer;
+        wxPanel     *plot_panel;
+        Plot        *plot;
+
+
         void OnExit();
     };
 }

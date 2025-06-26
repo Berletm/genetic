@@ -5,9 +5,13 @@ namespace genetic_gui
 {
     bool GeneticApp::OnInit()
     {
-        GeneticFrame* main_frame = new GeneticFrame();
-        main_frame->Show(true);
+        GeneticFrame* mainFrame = new GeneticFrame();
+        mainFrame->Show(true);
+        mainFrame->Center();
 
+
+        mainFrame->SetStatusText("Welcome to Genetic GUI!");
+        
         return true;
     }
 }
