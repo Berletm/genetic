@@ -12,10 +12,10 @@ namespace genetic
     {
         Generation offspring;
 
-        while (offspring.generation.size() != current_generation.generation.size())
+        while (offspring.size() != current_generation.size())
         {
             Individ individ = selection_strategy(current_generation);
-            offspring.generation.push_back(individ);
+            offspring.push_back(individ);
         }
 
         offspring.proba.clear();
@@ -41,14 +41,14 @@ namespace genetic
             {
                 double max = -std::numeric_limits<double>::infinity();
 
-                for (const auto& individ: current_generation.generation)
+                for (const auto& individ: current_generation)
                 {
                     if (individ.fitness > max) max = individ.fitness;
                 }
                 
                 double scaling_factor = max_after_scaling / max;
 
-                for (auto& individ: current_generation.generation)
+                for (auto& individ: current_generation)
                 {
                     individ.fitness *= scaling_factor;
                 }
@@ -61,25 +61,25 @@ namespace genetic
             {
                 double sum = 0;
 
-                for (const auto& individ: current_generation.generation)
+                for (const auto& individ: current_generation)
                 {
                     sum += individ.fitness;
                 }
 
-                double mean = sum / static_cast<double>(current_generation.generation.size());
+                double mean = sum / static_cast<double>(current_generation.size());
 
                 double std = 0;
 
-                for (const auto& individ: current_generation.generation)
+                for (const auto& individ: current_generation)
                 {
                     std += pow((individ.fitness - mean), 2);
                 }
 
-                std /= static_cast<double>(current_generation.generation.size() - 1);
+                std /= static_cast<double>(current_generation.size() - 1);
 
                 std = sqrt(std);
 
-                for (auto& individ: current_generation.generation)
+                for (auto& individ: current_generation)
                 {
                     individ.fitness = fmax(0, 1 + ((individ.fitness - mean) / std));
                 }
@@ -92,12 +92,12 @@ namespace genetic
             {
                 double sum = 0;
 
-                for (const auto& individ: current_generation.generation)
+                for (const auto& individ: current_generation)
                 {
                     sum += exp(individ.fitness);
                 }
 
-                for (auto& individ: current_generation.generation)
+                for (auto& individ: current_generation)
                 {
                     individ.fitness = exp(individ.fitness) / sum;
                 }
@@ -108,7 +108,7 @@ namespace genetic
 
             case (ScalingType::exponential):
             {
-                for (auto& individ: current_generation.generation)
+                for (auto& individ: current_generation)
                 {
                     individ.fitness = exp(individ.fitness);
                 }

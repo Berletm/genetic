@@ -10,7 +10,7 @@ static int chromosome_size = 10, generation_size = 10;
 
 int main(int argc, char* argv[])
 {
-    poly.poly.push_back({1, 2});
+    poly.push_back({1, 2});
 
     if (argc > 2)
     {
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     genetic::measure_generation(poly, generation);
     genetic::Generation offspring = genetic::selection(generation, genetic::scaling_rule<>);
 
-    for (const auto individ: offspring.generation)
+    for (const auto& individ: offspring)
     {
         std::cout << individ.fitness << std::endl;
     }

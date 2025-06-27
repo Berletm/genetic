@@ -9,13 +9,13 @@ namespace genetic
     enum class ScalingType {linear, sigma, softmax, exponential};
 
     inline void measure_generation(const Polynomial& poly, Generation& current_generation)
-    { for (auto& individ: current_generation.generation) individ.fitness = fitness(poly, individ); }
+    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ); }
 
     inline void calculate_proba(Generation& current_generation)
     {
         double sum = 0; 
-        for (const auto& individ: current_generation.generation) sum += individ.fitness; 
-        for (const auto& individ: current_generation.generation) current_generation.proba.push_back(1 - (individ.fitness / sum)); // q = 1 - p for minimization 
+        for (const auto& individ: current_generation) sum += individ.fitness; 
+        for (const auto& individ: current_generation) current_generation.proba.push_back(1 - (individ.fitness / sum)); // q = 1 - p for minimization 
     }
 
     Generation selection(Generation& current_generation, std::function<Individ(Generation&)> selection_strategy);
