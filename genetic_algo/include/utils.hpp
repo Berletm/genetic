@@ -27,8 +27,16 @@ namespace genetic
         Individ operator+(const Individ &other);
     };
 
-    using Generation = std::vector<Individ>;
+    struct Generation
+    {   
+        bool is_scaled = false;
+        std::vector<double>  proba;
+        std::vector<Individ> generation;
 
+        inline Individ&       operator[] (int idx) {return generation[idx];}
+        inline const Individ& operator[] (int idx) const {return generation[idx];}
+    };
+    
     using Interval   = std::pair<double, double>;
     using Partition  = std::vector<Interval>;
 

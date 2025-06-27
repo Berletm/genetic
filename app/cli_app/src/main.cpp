@@ -26,9 +26,9 @@ int main(int argc, char* argv[])
     generation = genetic::generate_generation(generation_size, chromosome_size, intervals);
     
     genetic::measure_generation(poly, generation);
-    genetic::Generation offspring = genetic::selection(generation, genetic::roulette_rule);
+    genetic::Generation offspring = genetic::selection(generation, genetic::scaling_rule<>);
 
-    for (const auto individ: offspring)
+    for (const auto individ: offspring.generation)
     {
         std::cout << individ.fitness << std::endl;
     }
