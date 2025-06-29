@@ -8,6 +8,7 @@
 
 #define MAX_HEIGHT 20
 #define MIN_HEIGHT -MAX_HEIGHT
+#define ALPHA_INTERVAL 0.25f
 
 namespace genetic
 {

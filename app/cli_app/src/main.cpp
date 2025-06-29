@@ -1,5 +1,6 @@
 #include <generator.hpp>
 #include <selection.hpp>
+#include <recombination.hpp>
 #include <iostream>
 
 genetic::Polynomial poly;
@@ -7,6 +8,8 @@ genetic::Polynomial poly;
 static double left, right;
 
 static int chromosome_size = 10, generation_size = 10;
+
+static double recomb_proba = 0.5;
 
 int main(int argc, char* argv[])
 {
@@ -28,7 +31,10 @@ int main(int argc, char* argv[])
     genetic::measure_generation(poly, generation);
     genetic::Generation offspring = genetic::selection(generation, genetic::scaling_rule<>);
 
-    for (const auto& individ: offspring)
+    genetic::Generation recomb_offspring = genetic::recombination(recomb_proba, generation, genetic::arithmetic_crossover);
+    genetic::measure_generation(poly, recomb_offspring);
+
+    for (const auto& individ: recomb_offspring)
     {
         std::cout << individ.fitness << std::endl;
     }
