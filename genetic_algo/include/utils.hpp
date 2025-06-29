@@ -6,8 +6,6 @@
 #include <limits>
 #include <math.h>
 
-#define MAX_HEIGHT 20
-#define MIN_HEIGHT -MAX_HEIGHT
 #define ALPHA_INTERVAL 0.25f
 
 namespace genetic
@@ -26,7 +24,7 @@ namespace genetic
     struct Generation: public std::vector<Individ>
     {   
         bool is_scaled = false;
-        std::vector<double>  proba;
+        std::vector<double> proba;
     };
     
     using Interval   = std::pair<double, double>;
@@ -60,6 +58,16 @@ namespace genetic
         }
 
         return error;
+    }
+
+    inline void measure_generation(const Polynomial& poly, Generation& current_generation)
+    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ); }
+
+    inline double mean_fitness(const Generation& current_generation)
+    {
+        double sum = 0;
+        for (const auto& individ: current_generation) sum += individ.fitness;
+        return (sum / current_generation.size());
     }
 }
 

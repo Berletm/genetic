@@ -1,16 +1,17 @@
 #include <generator.hpp>
-#include <selection.hpp>
-#include <recombination.hpp>
-#include <mutation.hpp>
+#include <evolution.hpp>
+
 #include <iostream>
 
 genetic::Polynomial poly;
 
 static double left, right;
 
-static int chromosome_size = 10, generation_size = 10;
+static int chromosome_size = 300, generation_size = 500;
 
-static double recomb_proba = 0.5, mutation_proba = 0.1;
+static double recomb_proba = 0.7, mutation_proba = 0.2;
+
+static int n_epoch = 1000;
 
 int main(int argc, char* argv[])
 {
@@ -22,26 +23,28 @@ int main(int argc, char* argv[])
         right = atof(argv[2]);       
     }
 
-    genetic::Partition intervals;
-
-    intervals = genetic::interval_partition(chromosome_size, left, right);
+    genetic::set_distribution({left, right}, poly);
 
     genetic::Generation generation;
-    generation = genetic::generate_generation(generation_size, chromosome_size, intervals);
+    generation = genetic::generate_generation(generation_size, chromosome_size, {left, right});
+
+    genetic::Generation best_generation = genetic::evolution(
+        n_epoch, 
+        poly, generation,
+        recomb_proba,
+        mutation_proba,
+        genetic::scaling_rule<genetic::ScalingType::sigma>,
+        genetic::arithmetic_crossover,
+        genetic::swap_mutation,
+        true
+    );
+
+    genetic::Individ best_individ = genetic::get_best(best_generation);
     
-    genetic::measure_generation(poly, generation);
-    genetic::Generation offspring = genetic::selection(generation, genetic::scaling_rule<>);
-
-    genetic::Generation recomb_offspring = genetic::recombination(recomb_proba, generation, genetic::arithmetic_crossover);
-    genetic::measure_generation(poly, recomb_offspring);
-
-    genetic::Generation mutated_offspring = genetic::mutation(mutation_proba, recomb_offspring, genetic::gauss_mutation);
-    genetic::measure_generation(poly, mutated_offspring);
-
-    for (const auto& individ: mutated_offspring)
+    for (const auto& gene: best_individ)
     {
-        std::cout << individ.fitness << std::endl;
+        std::cout << gene.height << " [" << gene.interval.first << ";" << gene.interval.second << "]" << std::endl;
     }
-    
+
     return 0;
 }

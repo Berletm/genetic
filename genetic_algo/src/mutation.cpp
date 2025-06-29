@@ -5,7 +5,7 @@ static std::random_device rd;
 static std::mt19937 generator(rd());
 static std::uniform_real_distribution udist(0.0, 1.0);
 
-#define DELTA 0.25
+#define DELTA 1.0
 #define SIGMA 1.0
 
 namespace genetic
