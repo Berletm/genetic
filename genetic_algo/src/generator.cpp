@@ -37,7 +37,7 @@ namespace genetic
         for (size_t i = 0; i < chromosome_size; ++i)
         {
             Gene gene = generate_gene(interval_partition[i]);
-            individ.chromosome.push_back(gene);
+            individ.push_back(gene);
         }
 
         return individ;
@@ -50,7 +50,7 @@ namespace genetic
         for (size_t i = 0; i < generation_size; ++i)
         {
             Individ individ = generate_individ(chromosome_size, interval_partition);
-            gen.generation.push_back(individ);
+            gen.push_back(individ);
         }
 
         return gen;

@@ -8,6 +8,7 @@
 
 #define MAX_HEIGHT 20
 #define MIN_HEIGHT -MAX_HEIGHT
+#define ALPHA_INTERVAL 0.25f
 
 namespace genetic
 {
@@ -17,40 +18,29 @@ namespace genetic
         std::pair<double, double> interval;
     };
 
-    struct Individ
+    struct Individ: public std::vector<Gene>
     {
-        std::vector<Gene> chromosome;
-
         double fitness = std::numeric_limits<double>::infinity();
-
-        // crossover operator
-        Individ operator+(const Individ &other);
     };
 
-    struct Generation
+    struct Generation: public std::vector<Individ>
     {   
         bool is_scaled = false;
         std::vector<double>  proba;
-        std::vector<Individ> generation;
-
-        inline Individ&       operator[] (int idx) {return generation[idx];}
-        inline const Individ& operator[] (int idx) const {return generation[idx];}
     };
     
     using Interval   = std::pair<double, double>;
     using Partition  = std::vector<Interval>;
 
-    struct Polynomial
+    struct Monomial {double coefficient = 1, power = 0;};
+
+    struct Polynomial: public std::vector<Monomial>
     {
-        struct Monomial {double coefficient = 1, power;};
-
-        std::vector<Monomial> poly;
-
         inline double eval(double x) const
         {
             double res = 0;
 
-            for (const auto& monomial: poly) res += monomial.coefficient * pow(x, monomial.power);
+            for (const auto& monomial: *this) res += monomial.coefficient * pow(x, monomial.power);
 
             return res;
         };
@@ -60,7 +50,7 @@ namespace genetic
     {
         double error = 0;
 
-        for (const auto& gene: individ.chromosome)
+        for (const auto& gene: individ)
         {
             double target_f_mean = (poly.eval(gene.interval.first) + poly.eval(gene.interval.second)) / 2;
             
