@@ -18,8 +18,6 @@ namespace genetic_gui
     };
 
     extern RenderingSettings   settings;
-    extern genetic::Polynomial poly;
-    extern genetic::Individ    step;
 }
 
 #endif // SHARED_HPP 

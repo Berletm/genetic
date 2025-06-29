@@ -3,7 +3,9 @@ add_library(genetic
     src/selection.cpp
     src/recombination.cpp
     src/mutation.cpp
+    src/evolution.cpp
     
+    include/evolution.hpp
     include/mutation.hpp
     include/recombination.hpp
     include/utils.hpp

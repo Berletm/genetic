@@ -1,5 +1,6 @@
 #include "selection.hpp"
 #include "generator.hpp"
+#include <iostream>
 #include <math.h>
 
 static std::random_device rd;
@@ -27,6 +28,8 @@ namespace genetic
     Individ roulette_rule(Generation& current_generation)
     {
         if (current_generation.proba.size() == 0) calculate_proba(current_generation);
+
+        double sum = std::accumulate(current_generation.proba.begin(), current_generation.proba.end(), 0);
 
         std::discrete_distribution<> dist(current_generation.proba.begin(), current_generation.proba.end());
 
