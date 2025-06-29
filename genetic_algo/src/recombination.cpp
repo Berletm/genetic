@@ -36,7 +36,7 @@ namespace genetic
 
     Individs single_point_crossover(Individ first, Individ second)
     {
-        std::uniform_int_distribution<int> dist(0, first.size());
+        std::uniform_int_distribution<int> dist(0, first.size() - 1);
 
         int crossover_point = dist(generator);
 
