@@ -9,7 +9,6 @@ namespace genetic_gui
         mainFrame->Show(true);
         mainFrame->Center();
 
-
         mainFrame->SetStatusText("Welcome to Genetic GUI!");
         
         return true;
