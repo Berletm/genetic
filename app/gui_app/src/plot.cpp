@@ -99,7 +99,7 @@ namespace genetic_gui
         if (settings.y_min <= 0 && settings.y_max >= 0)
         {
             float y = 0.0f;
-            float x = settings.x_max;
+            float x = settings.x_max * x_scale_factor;
             glVertex2f(x, y);
             glVertex2f(x - arrow_size_x, y + arrow_size_y / 2);
             glVertex2f(x - arrow_size_x, y - arrow_size_y / 2);
@@ -163,7 +163,11 @@ namespace genetic_gui
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        gluOrtho2D(settings.x_min, settings.x_max, settings.y_min, settings.y_max);
+        double x_center = (settings.x_min + settings.x_max) / 2.0;
+        double x_range = (settings.x_max - settings.x_min) * x_scale_factor;
+        
+        gluOrtho2D(x_center - x_range/2, x_center + x_range/2, 
+                settings.y_min, settings.y_max);
         
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -179,4 +183,11 @@ namespace genetic_gui
     BEGIN_EVENT_TABLE(Plot, wxGLCanvas)
         EVT_PAINT(Plot::Render)
     END_EVENT_TABLE()
+
+    FitnessPlot::FitnessPlot(wxWindow *parent) : Plot(parent)
+    {
+        SetXScaleFactor(0.5);
+    }
+
+    
 }

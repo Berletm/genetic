@@ -5,6 +5,9 @@
 #include <wx-3.2/wx/wx.h>
 #include "plot.hpp"
 
+#define WIDTH  640
+#define HEIGHT 480
+
 namespace genetic_gui
 {
     class GeneticFrame: public wxFrame
@@ -20,6 +23,10 @@ namespace genetic_gui
         wxBoxSizer  *plot_sizer;
         wxPanel     *plot_panel;
         Plot        *plot;
+
+        wxBoxSizer  *fitnessplot_sizer;
+        wxPanel     *fitnessplot_panel;
+        Plot        *fitnessplot;
 
 
         void OnExit();
