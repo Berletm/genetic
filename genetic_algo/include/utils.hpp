@@ -19,6 +19,34 @@ namespace genetic
     struct Individ: public std::vector<Gene>
     {
         double fitness = std::numeric_limits<double>::infinity();
+
+        inline double eval(double x) const
+        {
+            int left = 0;
+            int right = this->size() - 1;
+
+            while (left <= right)
+            {
+                int mid = (left + right) / 2;
+                
+                const auto& interval = this->at(mid);
+
+                if (x >= interval.interval.first && x <= interval.interval.second)
+                {
+                    return this->at(mid).height;
+                }
+                else if (x < interval.interval.first)
+                {
+                    right = mid - 1;
+                }
+                else
+                {
+                    left = mid + 1;
+                }
+            }
+
+            return 0.0;
+        }
     };
 
     struct Generation: public std::vector<Individ>
@@ -60,8 +88,26 @@ namespace genetic
         return error;
     }
 
+    inline double fitness(const Polynomial& poly, const Individ& individ, double step)
+    {
+        double error = 0;
+
+        for (double x = individ.front().interval.first; x < individ.back().interval.second; x += step)
+        {
+            double target_f = poly.eval(x);
+
+            double approx_f = individ.eval(x);
+
+            double delta = abs(target_f - approx_f); // maybe try pow(..., 2)
+            
+            error += delta;
+        }
+
+        return error;
+    }
+
     inline void measure_generation(const Polynomial& poly, Generation& current_generation)
-    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ); }
+    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ, individ.begin()->interval.second - individ.begin()->interval.first); }
 
     inline double mean_fitness(const Generation& current_generation)
     {

@@ -11,7 +11,7 @@ static int chromosome_size = 300, generation_size = 500;
 
 static double recomb_proba = 0.7, mutation_proba = 0.2;
 
-static int n_epoch = 1000;
+static int n_epoch = 2000;
 
 int main(int argc, char* argv[])
 {
