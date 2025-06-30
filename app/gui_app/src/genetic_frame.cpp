@@ -1,10 +1,112 @@
 #include "genetic_frame.hpp"
 
+#include <wx/artprov.h>
+#include <wx/graphics.h>
+
+
+
 namespace genetic_gui
 {
+    wxBitmap CreateNextBitmap(int width, int height, const wxColour& color) 
+    {
+        wxBitmap bmp(width, height, 32);
+        bmp.UseAlpha();
+        
+        wxMemoryDC memDC(bmp);
+        memDC.SetBackground(*wxTRANSPARENT_BRUSH);
+        memDC.Clear();
+        
+        wxGraphicsContext* gc = wxGraphicsContext::Create(memDC);
+        if (gc) 
+        {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            
+            wxGraphicsPath path = gc->CreatePath();
+            path.MoveToPoint(0, 0);
+            path.AddLineToPoint(0, height);
+            path.AddLineToPoint(width, height / 2);
+            path.CloseSubpath();
+            
+            gc->SetBrush(wxBrush(color));
+            gc->SetPen(wxPen(color, 1));
+            gc->FillPath(path);
+            
+            delete gc;
+        }
+        
+        memDC.SelectObject(wxNullBitmap);
+        return bmp;
+    }
+
+    wxBitmap CreatePrevBitmap(int width, int height, const wxColour& color) 
+    {
+        wxBitmap bmp(width, height, 32);
+        bmp.UseAlpha();
+        
+        wxMemoryDC memDC(bmp);
+        memDC.SetBackground(*wxTRANSPARENT_BRUSH);
+        memDC.Clear();
+        
+        wxGraphicsContext* gc = wxGraphicsContext::Create(memDC);
+        if (gc) 
+        {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            
+            wxGraphicsPath path = gc->CreatePath();
+            path.MoveToPoint(width, height);
+            path.AddLineToPoint(width, 0);
+            path.AddLineToPoint(0, height / 2);
+            path.CloseSubpath();
+            
+            gc->SetBrush(wxBrush(color));
+            gc->SetPen(wxPen(color, 1));
+            gc->FillPath(path);
+            
+            delete gc;
+        }
+        
+        memDC.SelectObject(wxNullBitmap);
+        return bmp;
+    }
+
+    
+
     GeneticFrame::GeneticFrame(): wxFrame(NULL, wxID_ANY, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX))
     {        
+        const wxColour textColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+
         statusbar = this->CreateStatusBar(1, wxSTB_SIZEGRIP, wxID_ANY);
+
+        wxBitmap next_bmp = CreateNextBitmap(12, 12, textColor);
+        wxBitmap prev_bmp = CreatePrevBitmap(12, 12, textColor);
+
+        wxBitmapButton *btn_next = new wxBitmapButton(
+                statusbar, 
+                wxID_ANY, 
+                next_bmp,
+                wxDefaultPosition,
+                wxDefaultSize,
+                wxBORDER_NONE);
+
+        const int btnWidth = 20;
+        const int btnHeight = statusbar->GetSize().GetHeight() - 2;
+        const int btnX = WIDTH - btnWidth + 80;
+        const int btnY = 0;
+
+        btn_next->SetSize(btnX, btnY, btnWidth, btnHeight);
+
+        wxBitmapButton *btn_prev = new wxBitmapButton(
+                statusbar, 
+                wxID_ANY, 
+                prev_bmp,
+                wxDefaultPosition,
+                wxDefaultSize,
+                wxBORDER_NONE);
+
+        const int prev_btnX = btnX - btnWidth;
+
+        btn_prev->SetSize(prev_btnX, btnY, btnWidth, btnHeight);
+
         menubar   = new wxMenuBar(0);
         
         file     = new wxMenu();
