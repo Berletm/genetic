@@ -1,7 +1,9 @@
 #include "shared.hpp"
+#include "genetic_frame.hpp"
 
 namespace genetic_gui
-{
+{   
+    Frames              frames;
     RenderingSettings   render_settings;
     AlgoSettings        algo_settings;
     genetic::Polynomial poly;

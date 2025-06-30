@@ -109,7 +109,7 @@ namespace genetic
     }
 
     inline void measure_generation(const Polynomial& poly, Generation& current_generation)
-    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ, individ.begin()->interval.second - individ.begin()->interval.first); }
+    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ); }
 
     inline double mean_fitness(const Generation& current_generation)
     {

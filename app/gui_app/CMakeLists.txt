@@ -5,6 +5,9 @@ add_executable(gui_genetic
     src/plot.cpp
     src/shared.cpp
     src/genetic_controller.cpp
+    src/file_frames.cpp
+    src/settings_frames.cpp
+    src/genetic_handlers.cpp
 )
 
 target_include_directories(gui_genetic PRIVATE ${wxWidgets_INCLUDE_DIRS} include)

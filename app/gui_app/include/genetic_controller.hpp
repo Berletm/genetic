@@ -13,6 +13,7 @@ namespace genetic_gui
 
         genetic::Generation current_generation;
         double mean_fitness;
+        double delta_fitness = std::numeric_limits<double>::infinity();
         int current_epoch = 0;
         
     public:

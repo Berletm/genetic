@@ -24,7 +24,8 @@ namespace genetic_gui
     }
 
     bool GeneticController::MakeStep()
-    {
+    {   
+        if (mean_fitness_history.size() >= 2) delta_fitness = mean_fitness_history[mean_fitness_history.size() - 2] - mean_fitness_history[mean_fitness_history.size() - 1]; 
         if (current_epoch >= algo_settings.n_epoch || mean_fitness <= algo_settings.epsilon) return false;
 
         current_generation = genetic::evolution_step(

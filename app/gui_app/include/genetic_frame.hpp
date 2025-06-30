@@ -13,8 +13,19 @@ namespace genetic_gui
 {
     class GeneticFrame: public wxFrame
     {
+    DECLARE_EVENT_TABLE()
     public:
-        GeneticFrame();
+        GeneticFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
+    protected:
+        // event handlers
+        void OnClose(wxCloseEvent& event);
+        void New(wxCommandEvent& event);
+        void Save(wxCommandEvent& event);
+        void Load(wxCommandEvent& event);
+        void RendSettings(wxCommandEvent& event);
+        void AlgoSettings(wxCommandEvent& event);
+        void Prev(wxCommandEvent& event);
+        void Next(wxCommandEvent& event);
     private:
         wxStatusBar *statusbar;
         wxMenuBar   *menubar;
@@ -34,8 +45,6 @@ namespace genetic_gui
         wxTimer timer;
 
         void OnTimer(wxTimerEvent&);
-
-        void OnExit();
     };
 }
 
