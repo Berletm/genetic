@@ -117,33 +117,33 @@ namespace genetic_gui
         glEnd();
     }
 
-    void Plot::RenderData()
-    {
-        double dx = (settings.x_max - settings.x_min) / settings.resolution; 
+    // void Plot::RenderData()
+    // {
+    //     double dx = (settings.x_max - settings.x_min) / settings.resolution; 
         
-        glLineWidth(1.5f);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glBegin(GL_LINE_STRIP);
+    //     glLineWidth(1.5f);
+    //     glColor3f(1.0f, 0.0f, 0.0f);
+    //     glBegin(GL_LINE_STRIP);
 
-        for (double x = settings.x_min; x <= settings.x_max; x += dx)
-        {
-            glVertex2f(x, poly.eval(x));
-        }
+    //     for (double x = settings.x_min; x <= settings.x_max; x += dx)
+    //     {
+    //         glVertex2f(x, poly.eval(x));
+    //     }
 
-        glEnd();
+    //     glEnd();
 
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glBegin(GL_LINE_STRIP);
+    //     glColor3f(0.0f, 0.0f, 1.0f);
+    //     glBegin(GL_LINE_STRIP);
 
-        for (const auto& interval: step)
-        {
-            glVertex2f(interval.interval.first, interval.height);
-            glVertex2f(interval.interval.second, interval.height);
-        }
+    //     for (const auto& interval: step)
+    //     {
+    //         glVertex2f(interval.interval.first, interval.height);
+    //         glVertex2f(interval.interval.second, interval.height);
+    //     }
 
-        glEnd();
-        glLineWidth(1.0f);
-    }
+    //     glEnd();
+    //     glLineWidth(1.0f);
+    // }
 
     void Plot::Render(wxPaintEvent &evt)
     {
