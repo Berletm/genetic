@@ -9,17 +9,16 @@ namespace genetic_gui
 {
 class Plot: public wxGLCanvas
 {
-private:
+protected:
     wxGLContext context;
 
     float x_scale_factor = 1.0f; 
 
     void RenderGrid();
     void RenderAxes();
-    void RenderData();
+    virtual void RenderData() = 0;
     void Render(wxPaintEvent &evt);
 
-protected:
     inline void SetXScaleFactor(float scale) { x_scale_factor = scale; }
     inline float GetXScaleFactor() const { return x_scale_factor; }
 public:
@@ -28,9 +27,24 @@ public:
     DECLARE_EVENT_TABLE()
 };
 
-class FitnessPlot: public Plot
+class AlgoPlot: public Plot
 {
 private:
+    genetic::Generation init_generation;
+
+protected:
+
+public:
+    AlgoPlot(wxWindow *parent);
+
+    void InitAlgo();
+};
+
+class FitnessPlot: public Plot
+{
+protected:
+    std::vector<double> fitness_history;
+
     void RenderData();
 public:
     FitnessPlot(wxWindow *parent);
