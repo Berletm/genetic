@@ -69,8 +69,6 @@ namespace genetic_gui
         return bmp;
     }
 
-    
-
     GeneticFrame::GeneticFrame(): wxFrame(NULL, wxID_ANY, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX))
     {        
         const wxColour textColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
@@ -126,26 +124,43 @@ namespace genetic_gui
         settings->Append(rendering_settings);
         settings->Append(algorithm_settings);
 
+        controller.InitAlgo();
+
         wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
     
-        plot_sizer = new wxBoxSizer(wxVERTICAL);
-        plot_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-        plot_panel->SetMinSize(wxSize(WIDTH * 0.75f, HEIGHT * 0.75f));
-        plot = new Plot(plot_panel);
-        plot_sizer->Add(plot, 1, wxALL|wxEXPAND, 2);
-        plot_panel->SetSizer(plot_sizer);
-        main_sizer->Add(plot_panel, 2, wxALL|wxEXPAND, 2);
+        algoplot_sizer = new wxBoxSizer(wxVERTICAL);
+        alogplot_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+        alogplot_panel->SetMinSize(wxSize(WIDTH * 0.75f, HEIGHT * 0.75f));
+        algoplot = new AlgoPlot(alogplot_panel, &controller);
+        algoplot_sizer->Add(algoplot, 1, wxALL|wxEXPAND, 2);
+        alogplot_panel->SetSizer(algoplot_sizer);
+        main_sizer->Add(alogplot_panel, 2, wxALL|wxEXPAND, 2);
 
         fitnessplot_sizer = new wxBoxSizer(wxVERTICAL);
         fitnessplot_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
         fitnessplot_panel->SetMinSize(wxSize(WIDTH * 0.25f, HEIGHT * 0.25f));
-        fitnessplot = new FitnessPlot(fitnessplot_panel);
+        fitnessplot = new FitnessPlot(fitnessplot_panel, &controller);
         fitnessplot_sizer->Add(fitnessplot, 1, wxALL|wxEXPAND, 2);
         fitnessplot_panel->SetSizer(fitnessplot_sizer);
         main_sizer->Add(fitnessplot_panel, 1, wxALL|wxEXPAND, 2);
 
+        controller.AddObserver(algoplot);
+        controller.AddObserver(fitnessplot);
+
+        timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
+        timer.Start(100); // 10 FPS
+
         this->SetMenuBar(menubar);
         this->SetSizer(main_sizer);
         this->Fit();
+    }
+
+    void GeneticFrame::OnTimer(wxTimerEvent&) 
+    {
+        if (!controller.MakeStep()) 
+        {
+            timer.Stop();
+            wxMessageBox("Algorithm finished!");
+        }
     }
 }

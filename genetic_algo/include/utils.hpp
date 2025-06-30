@@ -7,6 +7,7 @@
 #include <math.h>
 
 #define ALPHA_INTERVAL 0.25f
+#define EPSILON 0.005 
 
 namespace genetic
 {
@@ -57,6 +58,7 @@ namespace genetic
     
     using Interval   = std::pair<double, double>;
     using Partition  = std::vector<Interval>;
+    using Individs = std::pair<Individ, Individ>;
 
     struct Monomial {double coefficient = 1, power = 0;};
 

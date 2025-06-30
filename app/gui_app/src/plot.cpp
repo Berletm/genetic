@@ -10,21 +10,22 @@
 
 namespace genetic_gui
 {
-    Plot::Plot(wxWindow *parent)
+    // Plot
+    Plot::Plot(wxWindow *parent, GeneticController *ctr)
     : wxGLCanvas(
         parent, wxID_ANY, 
-        settings.gl_attribs[0] == 0 ? nullptr : settings.gl_attribs,  
+        render_settings.gl_attribs[0] == 0 ? nullptr : render_settings.gl_attribs,  
         wxDefaultPosition, 
         wxDefaultSize, 
-        wxFULL_REPAINT_ON_RESIZE), context(this)
+        wxFULL_REPAINT_ON_RESIZE), context(this), controller(ctr)
     {
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     }
 
     void Plot::RenderGrid()
     {
-        float rangeX = settings.x_max - settings.x_min;
-        float rangeY = settings.y_max - settings.y_min;
+        float rangeX = x_max - x_min;
+        float rangeY = y_max - y_min;
 
         float gridStepX = rangeX / 20.0f;
         float gridStepY = rangeY / 20.0f;
@@ -37,15 +38,15 @@ namespace genetic_gui
         glLineStipple(1, 0xAAAA);
 
         glBegin(GL_LINES);
-        for (float x = settings.x_min; x <= settings.x_max; x += gridStepX)
+        for (float x = x_min; x <= x_max; x += gridStepX)
         {
-            glVertex2f(x, settings.y_min);
-            glVertex2f(x, settings.y_max);
+            glVertex2f(x, y_min);
+            glVertex2f(x, y_max);
         }
-        for (float y = settings.y_min; y <= settings.y_max; y += gridStepY)
+        for (float y = y_min; y <= y_max; y += gridStepY)
         {
-            glVertex2f(settings.x_min, y);
-            glVertex2f(settings.x_max, y);
+            glVertex2f(x_min, y);
+            glVertex2f(x_max, y);
         }
         glEnd();
 
@@ -55,15 +56,15 @@ namespace genetic_gui
         glLineWidth(1.5f);
 
         glBegin(GL_LINES);
-        for (float x = settings.x_min; x <= settings.x_max; x += boldStepX)
+        for (float x = x_min; x <= x_max; x += boldStepX)
         {
-            glVertex2f(x, settings.y_min);
-            glVertex2f(x, settings.y_max);
+            glVertex2f(x, y_min);
+            glVertex2f(x, y_max);
         }
-        for (float y = settings.y_min; y <= settings.y_max; y += boldStepY)
+        for (float y = y_min; y <= y_max; y += boldStepY)
         {
-            glVertex2f(settings.x_min, y);
-            glVertex2f(settings.x_max, y);
+            glVertex2f(x_min, y);
+            glVertex2f(x_max, y);
         }
         glEnd();
 
@@ -76,39 +77,39 @@ namespace genetic_gui
         glLineWidth(2.0f);
         glBegin(GL_LINES);
 
-        if (settings.y_min <= 0 && settings.y_max >= 0)
+        if (render_settings.y_min <= 0 && render_settings.y_max >= 0)
         {
-            glVertex2f(settings.x_min, 0.0f);
-            glVertex2f(settings.x_max, 0.0f);
+            glVertex2f(render_settings.x_min, 0.0f);
+            glVertex2f(render_settings.x_max, 0.0f);
         }
 
-        if (settings.x_min <= 0 && settings.x_max >= 0)
+        if (render_settings.x_min <= 0 && render_settings.x_max >= 0)
         {
-            glVertex2f(0.0f, settings.y_min);
-            glVertex2f(0.0f, settings.y_max);
+            glVertex2f(0.0f, render_settings.y_min);
+            glVertex2f(0.0f, render_settings.y_max);
         }
 
         glEnd();
         glLineWidth(1.0f);
 
-        float arrow_size_x = (settings.x_max - settings.x_min) * 0.015f;
-        float arrow_size_y = (settings.y_max - settings.y_min) * 0.02f;
+        float arrow_size_x = (render_settings.x_max - render_settings.x_min) * 0.015f;
+        float arrow_size_y = (render_settings.y_max - render_settings.y_min) * 0.02f;
 
         glBegin(GL_TRIANGLES);
 
-        if (settings.y_min <= 0 && settings.y_max >= 0)
+        if (render_settings.y_min <= 0 && render_settings.y_max >= 0)
         {
             float y = 0.0f;
-            float x = settings.x_max * x_scale_factor;
+            float x = render_settings.x_max * x_scale_factor;
             glVertex2f(x, y);
             glVertex2f(x - arrow_size_x, y + arrow_size_y / 2);
             glVertex2f(x - arrow_size_x, y - arrow_size_y / 2);
         }
 
-        if (settings.x_min <= 0 && settings.x_max >= 0)
+        if (render_settings.x_min <= 0 && render_settings.x_max >= 0)
         {
             float x = 0.0f;
-            float y = settings.y_max;
+            float y = render_settings.y_max;
             glVertex2f(x, y);
             glVertex2f(x - arrow_size_x / 2, y - arrow_size_y);
             glVertex2f(x + arrow_size_x / 2, y - arrow_size_y);
@@ -117,33 +118,21 @@ namespace genetic_gui
         glEnd();
     }
 
-    // void Plot::RenderData()
-    // {
-    //     double dx = (settings.x_max - settings.x_min) / settings.resolution; 
-        
-    //     glLineWidth(1.5f);
-    //     glColor3f(1.0f, 0.0f, 0.0f);
-    //     glBegin(GL_LINE_STRIP);
+    void Plot::UpdatePlotParameters(double center, double range, double ymin, double ymax) 
+    {
+        x_center = center;
+        x_range = range;
+        y_min = ymin;
+        y_max = ymax;
+    }
 
-    //     for (double x = settings.x_min; x <= settings.x_max; x += dx)
-    //     {
-    //         glVertex2f(x, poly.eval(x));
-    //     }
-
-    //     glEnd();
-
-    //     glColor3f(0.0f, 0.0f, 1.0f);
-    //     glBegin(GL_LINE_STRIP);
-
-    //     for (const auto& interval: step)
-    //     {
-    //         glVertex2f(interval.interval.first, interval.height);
-    //         glVertex2f(interval.interval.second, interval.height);
-    //     }
-
-    //     glEnd();
-    //     glLineWidth(1.0f);
-    // }
+    void Plot::PrepareForRendering() 
+    {
+        x_center = (x_min + x_max) / 2.0;
+        x_range = (x_max - x_min) * x_scale_factor;
+        y_min = render_settings.y_min;
+        y_max = render_settings.y_max;
+    }
 
     void Plot::Render(wxPaintEvent &evt)
     {
@@ -160,14 +149,14 @@ namespace genetic_gui
         double scale = GetContentScaleFactor();
 
         glViewport(0, 0, win_size.x * scale, win_size.y * scale);
+
+        PrepareForRendering();
+
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-
-        double x_center = (settings.x_min + settings.x_max) / 2.0;
-        double x_range = (settings.x_max - settings.x_min) * x_scale_factor;
         
         gluOrtho2D(x_center - x_range/2, x_center + x_range/2, 
-                settings.y_min, settings.y_max);
+                y_min, y_max);
         
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -184,10 +173,211 @@ namespace genetic_gui
         EVT_PAINT(Plot::Render)
     END_EVENT_TABLE()
 
-    FitnessPlot::FitnessPlot(wxWindow *parent) : Plot(parent)
+
+    // AlgoPlot
+    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController* ctr) : Plot(parent, ctr)
     {
-        SetXScaleFactor(0.5);
+
     }
 
-    
+    void AlgoPlot::RenderData()
+    {
+        if (!controller) return;
+        
+        glLineWidth(1.5f);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glBegin(GL_LINE_STRIP);
+
+        double dx = (render_settings.x_max - render_settings.x_min) / render_settings.resolution;
+
+        for (double x = render_settings.x_min; x <= render_settings.x_max; x += dx) 
+        {
+            glVertex2f(x, poly.eval(x));
+        }
+        glEnd();
+        
+        if (!best_individ_history.empty()) 
+        {
+            glColor3f(0.0f, 0.0f, 1.0f);
+            glBegin(GL_LINE_STRIP);
+
+            for (const auto& interval: best_individ_history.back())
+            {
+                glVertex2f(interval.interval.first, interval.height);
+                glVertex2f(interval.interval.second, interval.height);
+            }
+
+            glEnd();
+            glLineWidth(1.0f);
+        }
+    }
+
+    FitnessPlot::FitnessPlot(wxWindow *parent, GeneticController* ctr)
+    : Plot(parent, ctr)
+    {
+        SetXScaleFactor(0.5);
+        x_min = 0;
+        x_max = 10.0;
+        y_min = -1.0;
+        y_max = 1.0;
+    }
+
+    void FitnessPlot::PrepareForRendering() 
+    {
+        if (!controller || mean_fitness_history.empty()) {
+            Plot::PrepareForRendering();
+            return;
+        }
+
+        size_t last_gen = mean_fitness_history.size() - 1;
+        
+        double new_target_x_max = std::max(static_cast<double>(last_gen), 10.0);
+        
+        auto [min_it, max_it] = std::minmax_element(mean_fitness_history.begin(), mean_fitness_history.end());
+        double y_range = *max_it - *min_it;
+        
+        if (y_range < 1e-10) {
+            y_range = 1.0;
+            *min_it = *max_it - 0.5;
+        }
+        
+        double new_target_y_min = *min_it - y_range * 0.2;
+        double new_target_y_max = *max_it + y_range * 0.2;
+        
+        if (new_target_y_max - new_target_y_min < 0.1) 
+        {
+            new_target_y_min = -0.05;
+            new_target_y_max = 0.05;
+        }
+
+        const double expansion_speed = 0.2;
+        x_max = x_max * (1.0 - expansion_speed) + new_target_x_max * expansion_speed;
+        y_min = y_min * (1.0 - expansion_speed) + new_target_y_min * expansion_speed;
+        y_max = y_max * (1.0 - expansion_speed) + new_target_y_max * expansion_speed;
+
+        x_min = 0;
+        x_center = x_max / 2.0;
+        x_range = x_max * 1.05;
+
+        wxSize size = GetSize();
+        float aspect = float(size.x)/size.y;
+        float data_aspect = (x_max - x_min)/(y_max - y_min);
+        
+        if(data_aspect > aspect) {
+            float new_height = (x_max - x_min)/aspect;
+            float y_center = (y_min + y_max)/2;
+            y_min = y_center - new_height/2;
+            y_max = y_center + new_height/2;
+        }
+        else 
+        {
+            float new_width = (y_max - y_min)*aspect;
+            float x_center = (x_min + x_max)/2;
+            x_min = x_center - new_width/2;
+            x_max = x_center + new_width/2;
+            x_range = x_max - x_min;
+        }
+
+        
+    }
+
+
+    void FitnessPlot::RenderData()
+    {
+        if (!controller || mean_fitness_history.empty()) return;
+
+        glLineWidth(2.0f);
+        glColor3f(0.0f, 0.5f, 0.0f);
+        glBegin(GL_LINE_STRIP);
+        for (size_t i = 0; i < mean_fitness_history.size(); ++i) {
+            glVertex2f(static_cast<float>(i), mean_fitness_history[i]);
+        }
+        glEnd();
+
+        glPointSize(5.0f);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glBegin(GL_POINTS);
+        if (!mean_fitness_history.empty()) {
+            size_t last = mean_fitness_history.size() - 1;
+            glVertex2f(static_cast<float>(last), mean_fitness_history[last]);
+        }
+        glEnd();
+    }
+
+    void FitnessPlot::RenderAxes()
+    {
+        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+        glLineWidth(2.0f);
+        
+        float x_axis_y = y_min * 1.15;
+        
+        glBegin(GL_LINES);
+        glVertex2f(x_min, x_axis_y);
+        glVertex2f(x_max, x_axis_y);
+        
+        glVertex2f(0.0f, y_min);
+        glVertex2f(0.0f, y_max);
+        glEnd();
+        
+        float arrow_size_x = (x_max - x_min) * 0.01f;
+        float arrow_size_y = (y_max - y_min) * 0.02f;
+        
+        glBegin(GL_TRIANGLES);
+        glVertex2f(x_max, x_axis_y);
+        glVertex2f(x_max - arrow_size_x, x_axis_y + arrow_size_y);
+        glVertex2f(x_max - arrow_size_x, x_axis_y - arrow_size_y);
+        
+        glVertex2f(0.0f, y_max);
+        glVertex2f(-arrow_size_x, y_max - arrow_size_y);
+        glVertex2f(arrow_size_x, y_max - arrow_size_y);
+        glEnd();
+        
+        glLineWidth(1.0f);
+    }
+
+
+    void FitnessPlot::RenderGrid()
+    {
+        float rangeX = x_max - x_min;
+        float rangeY = y_max - y_min;
+        float y_center = (y_min + y_max) / 2.0f;
+        
+        float gridStepX = rangeX / 10.0f;
+        float gridStepY = rangeY / 15.0f;
+        
+        glColor4f(0.85f, 0.85f, 0.85f, 0.5f);
+        glLineWidth(1.0f);
+        glEnable(GL_LINE_STIPPLE);
+        glLineStipple(1, 0xAAAA);
+        
+        glBegin(GL_LINES);
+        for (float x = x_min; x <= x_max + gridStepX; x += gridStepX) 
+        {
+            glVertex2f(x, y_min);
+            glVertex2f(x, y_max);
+        }
+        for (float y = y_min; y <= y_max + gridStepY; y += gridStepY) 
+        {
+            glVertex2f(x_min, y);
+            glVertex2f(x_max, y);
+        }
+        glEnd();
+        glDisable(GL_LINE_STIPPLE);
+        
+        glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
+        glLineWidth(1.5f);
+        glBegin(GL_LINES);
+        for (float x = x_min; x <= x_max + gridStepX * 2.5; x += gridStepX * 2.5) 
+        {
+            glVertex2f(x, y_min);
+            glVertex2f(x, y_max);
+        }
+
+        for (float y = y_min; y <= y_max + gridStepY * 2.5; y += gridStepY * 2.5) 
+        {
+            glVertex2f(x_min, y);
+            glVertex2f(x_max, y);
+        }
+        glEnd();
+    }
 }
