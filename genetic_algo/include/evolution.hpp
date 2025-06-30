@@ -6,8 +6,6 @@
 #include "recombination.hpp"
 #include "mutation.hpp"
 
-#define EPSILON 0.005 
-
 namespace genetic
 {
     Generation evolution(
