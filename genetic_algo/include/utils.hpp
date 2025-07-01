@@ -7,10 +7,32 @@
 #include <math.h>
 
 #define ALPHA_INTERVAL 0.25f
-#define EPSILON 0.005 
+#define EPSILON 0.00001 
 
 namespace genetic
-{
+{   
+    enum class SelectionMethod
+    {
+        Roulette,
+        LinearScaling,
+        SigmaScaling,
+        SoftmaxScaling,
+        ExponentialScaling
+    };
+
+    enum class RecombinationMethod
+    {
+        SinglePoint,
+        Arithmetic
+    };
+
+    enum class MutationMethod 
+    {
+        Swap,
+        Gauss,
+        Perturbation
+    };
+
     struct Gene
     {
         double height;

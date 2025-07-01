@@ -1,6 +1,7 @@
 #ifndef EVOLUTION_HPP
 #define EVOLUTION_HPP
 
+#include <unordered_map>
 #include "utils.hpp"
 #include "selection.hpp"
 #include "recombination.hpp"

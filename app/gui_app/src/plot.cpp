@@ -14,11 +14,13 @@ namespace genetic_gui
     Plot::Plot(wxWindow *parent, GeneticController *ctr)
     : wxGLCanvas(
         parent, wxID_ANY, 
-        render_settings.gl_attribs[0] == 0 ? nullptr : render_settings.gl_attribs,  
+        nullptr,  
         wxDefaultPosition, 
         wxDefaultSize, 
         wxFULL_REPAINT_ON_RESIZE), context(this), controller(ctr)
     {
+        wxGLAttributes attrs;
+        attrs.PlatformDefaults().EndList();
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     }
 
@@ -173,7 +175,6 @@ namespace genetic_gui
         EVT_PAINT(Plot::Render)
     END_EVENT_TABLE()
 
-
     // AlgoPlot
     AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController* ctr) : Plot(parent, ctr)
     {
@@ -281,7 +282,6 @@ namespace genetic_gui
         
     }
 
-
     void FitnessPlot::RenderData()
     {
         if (!controller || mean_fitness_history.empty()) return;
@@ -335,49 +335,4 @@ namespace genetic_gui
         glLineWidth(1.0f);
     }
 
-
-    void FitnessPlot::RenderGrid()
-    {
-        float rangeX = x_max - x_min;
-        float rangeY = y_max - y_min;
-        float y_center = (y_min + y_max) / 2.0f;
-        
-        float gridStepX = rangeX / 10.0f;
-        float gridStepY = rangeY / 15.0f;
-        
-        glColor4f(0.85f, 0.85f, 0.85f, 0.5f);
-        glLineWidth(1.0f);
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0xAAAA);
-        
-        glBegin(GL_LINES);
-        for (float x = x_min; x <= x_max + gridStepX; x += gridStepX) 
-        {
-            glVertex2f(x, y_min);
-            glVertex2f(x, y_max);
-        }
-        for (float y = y_min; y <= y_max + gridStepY; y += gridStepY) 
-        {
-            glVertex2f(x_min, y);
-            glVertex2f(x_max, y);
-        }
-        glEnd();
-        glDisable(GL_LINE_STIPPLE);
-        
-        glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
-        glLineWidth(1.5f);
-        glBegin(GL_LINES);
-        for (float x = x_min; x <= x_max + gridStepX * 2.5; x += gridStepX * 2.5) 
-        {
-            glVertex2f(x, y_min);
-            glVertex2f(x, y_max);
-        }
-
-        for (float y = y_min; y <= y_max + gridStepY * 2.5; y += gridStepY * 2.5) 
-        {
-            glVertex2f(x_min, y);
-            glVertex2f(x_max, y);
-        }
-        glEnd();
-    }
 }

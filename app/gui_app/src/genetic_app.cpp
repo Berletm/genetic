@@ -8,10 +8,10 @@ namespace genetic_gui
 {
     bool GeneticApp::OnInit()
     {
-        frames.mainFrame = new GeneticFrame(NULL, wxID_ANY, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX));
+        frames.mainFrame = new GeneticFrame(nullptr, wxID_ANY, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX));
         frames.algoFrame = new AlgoSettingsFrame();
         frames.rendFrame = new RendSettingsFrame();
-        frames.newFrame  = new NewFrame(nullptr, ID_New, "New", wxDefaultPosition, wxDefaultSize, 0);
+        frames.newFrame  = new NewFrame(frames.mainFrame, nullptr, ID_New, "New", wxDefaultPosition, wxDefaultSize, 0);
 
         frames.mainFrame->Show(true);
         frames.mainFrame->Center();
@@ -19,5 +19,10 @@ namespace genetic_gui
         frames.mainFrame->SetStatusText("Welcome to Genetic GUI!");
         
         return true;
+    }
+
+    int GeneticApp::OnExit()
+    {
+        return wxApp::OnExit();
     }
 }

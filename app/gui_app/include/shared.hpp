@@ -6,6 +6,8 @@
 #include <recombination.hpp>
 #include <mutation.hpp>
 #include <wx-3.2/wx/glcanvas.h>
+#include <evolution.hpp>
+#include <unordered_map>
 #include "settings_frames.hpp"
 #include "file_frames.hpp"
 
@@ -16,6 +18,28 @@
 
 namespace genetic_gui 
 {
+    static std::unordered_map<genetic::SelectionMethod, std::function<genetic::Individ(genetic::Generation&)>> selection_map = 
+    {
+        {genetic::SelectionMethod::Roulette, genetic::roulette_rule},
+        {genetic::SelectionMethod::LinearScaling, [](genetic::Generation& gen) { return genetic::scaling_rule<genetic::ScalingType::linear>(gen);}},
+        {genetic::SelectionMethod::SigmaScaling, [](genetic::Generation& gen) { return genetic::scaling_rule<genetic::ScalingType::sigma>(gen);}},
+        {genetic::SelectionMethod::SoftmaxScaling, genetic::scaling_rule<genetic::ScalingType::softmax>},
+        {genetic::SelectionMethod::ExponentialScaling, genetic::scaling_rule<genetic::ScalingType::exponential>}
+    };
+
+    static std::unordered_map<genetic::RecombinationMethod, std::function<genetic::Individs(genetic::Individ, genetic::Individ)>> recombination_map = 
+    {
+        {genetic::RecombinationMethod::SinglePoint, genetic::single_point_crossover},
+        {genetic::RecombinationMethod::Arithmetic, genetic::arithmetic_crossover}
+    };
+
+    static std::unordered_map<genetic::MutationMethod, std::function<genetic::Individ(genetic::Individ)>> mutation_map =
+    {
+        {genetic::MutationMethod::Swap, genetic::swap_mutation},
+        {genetic::MutationMethod::Gauss, genetic::gauss_mutation},
+        {genetic::MutationMethod::Perturbation, genetic::perturbation_mutation}
+    };
+
     class GeneticFrame;
 
     enum 
@@ -41,13 +65,13 @@ namespace genetic_gui
     struct AlgoSettings
     {
         genetic::Interval interval = {X_MIN, X_MAX};
-        int n_epoch = 5000, generation_size = 1500, chromosome_size = 500;
+        int n_epoch = 1000, generation_size = 300, chromosome_size = 100;
         
         double mutation_p = 0.1, recombination_p = 0.7, epsilon = EPSILON;
 
-        std::function<genetic::Individ(genetic::Generation&)> selection_strategy = genetic::scaling_rule<genetic::ScalingType::sigma>;
-        std::function<genetic::Individs(genetic::Individ, genetic::Individ)> recombination_strategy = genetic::arithmetic_crossover;
-        std::function<genetic::Individ(genetic::Individ)> mutation_strategy = genetic::swap_mutation;
+        std::function<genetic::Individ(genetic::Generation&)> selection_strategy;
+        std::function<genetic::Individs(genetic::Individ, genetic::Individ)> recombination_strategy;
+        std::function<genetic::Individ(genetic::Individ)> mutation_strategy;
     };
 
     struct Frames
@@ -66,6 +90,8 @@ namespace genetic_gui
 
     extern std::vector<double>           mean_fitness_history;
     extern std::vector<genetic::Individ> best_individ_history;
+
+    void initialize_globals(const genetic::Polynomial& initial_poly, const AlgoSettings& settings);
 }
 
 #endif // SHARED_HPP 

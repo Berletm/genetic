@@ -135,8 +135,6 @@ namespace genetic_gui
         settings->Append(rendering_settings);
         settings->Append(algorithm_settings);
 
-        controller.InitAlgo();
-
         wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
     
         algoplot_sizer = new wxBoxSizer(wxVERTICAL);
@@ -155,12 +153,6 @@ namespace genetic_gui
         fitnessplot_panel->SetSizer(fitnessplot_sizer);
         main_sizer->Add(fitnessplot_panel, 1, wxALL|wxEXPAND, 2);
 
-        controller.AddObserver(algoplot);
-        controller.AddObserver(fitnessplot);
-
-        timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
-        timer.Start(100); // 10 FPS
-
         this->SetMenuBar(menubar);
         this->SetSizer(main_sizer);
         this->Fit();
@@ -173,5 +165,15 @@ namespace genetic_gui
             timer.Stop();
             wxMessageBox("Algorithm finished!");
         }
+    }
+
+    void GeneticFrame::StartAlgo()
+    {
+        controller.InitAlgo();
+        controller.AddObserver(algoplot);
+        controller.AddObserver(fitnessplot);
+
+        timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
+        timer.Start(100); // 10 FPS
     }
 }

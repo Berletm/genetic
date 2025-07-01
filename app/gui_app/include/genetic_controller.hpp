@@ -13,12 +13,12 @@ namespace genetic_gui
 
         genetic::Generation current_generation;
         double mean_fitness;
-        double delta_fitness = std::numeric_limits<double>::infinity();
-        int current_epoch = 0;
+        double delta_fitness;
+        int current_epoch;
         
     public:
         inline void AddObserver(wxWindow* observer) {observers.push_back(observer);}
-        inline void NotifyObservers() {for (auto obs : observers) obs->Refresh();}
+        inline void NotifyObservers() {for (auto obs : observers) {if (obs) obs->Refresh();}}
 
         GeneticController();
 

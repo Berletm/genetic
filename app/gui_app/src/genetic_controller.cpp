@@ -4,14 +4,19 @@
 
 namespace genetic_gui
 {
-    GeneticController::GeneticController()
-    {
-        InitAlgo();
-        poly.push_back(genetic::Monomial{1, 2});
-    }
+    GeneticController::GeneticController():
+    mean_fitness(0.0), 
+    delta_fitness(std::numeric_limits<double>::infinity()),
+    current_epoch(0)
+    {}
 
     void GeneticController::InitAlgo()
-    {
+    {   
+        mean_fitness_history.clear();
+        best_individ_history.clear();
+        current_epoch = 0;
+        mean_fitness = std::numeric_limits<double>::infinity();
+
         current_generation = genetic::generate_generation(
             algo_settings.generation_size, 
             algo_settings.chromosome_size, 

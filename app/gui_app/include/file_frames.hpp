@@ -2,14 +2,43 @@
 #define FILE_FRAMES_HPP
 
 #include <wx-3.2/wx/frame.h>
+#include <wx-3.2/wx/textctrl.h>
+#include <wx-3.2/wx/sizer.h>
+#include <wx-3.2/wx/combobox.h>
+#include <utils.hpp>
 
 namespace genetic_gui
 {
+    class GeneticFrame;
+
     class NewFrame : public wxFrame
     {
     private:
+        // event handlers
+        void Compute(wxCommandEvent& event);
+        void OnNumberInput(wxCommandEvent& event);
+        void OnClose(wxCloseEvent& event);
+
+        genetic::Polynomial ParsePoly(const std::string& poly_str);
     public:
-        NewFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
+        NewFrame(GeneticFrame* frame, wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
+    private:
+        GeneticFrame *geneticframe;
+
+        wxBoxSizer *mainHorizontalSizer;
+        wxBoxSizer *leftVerticalSizer;
+
+        wxTextCtrl *generation_size_ctrl;
+        wxTextCtrl *chromosome_size_ctrl;
+        wxTextCtrl *poly_ctrl;
+        wxTextCtrl *epoch_ctrl;
+        wxTextCtrl *recomb_p_ctrl;
+        wxTextCtrl *mutation_p_ctrl;
+        wxTextCtrl *epsilon_ctrl;
+
+        wxComboBox *selectionComboBox;
+        wxComboBox *recombinationComboBox;
+        wxComboBox *mutationComboBox;
     };
         
 

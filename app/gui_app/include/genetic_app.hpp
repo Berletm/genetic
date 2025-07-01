@@ -9,6 +9,7 @@ namespace genetic_gui
     {
     public:
         virtual bool OnInit();
+        virtual int OnExit();
     };
 }
 
