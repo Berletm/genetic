@@ -47,6 +47,7 @@ namespace genetic_gui
         ID_New = 7777,
         ID_Load,
         ID_Save,
+        ID_Main,
         ID_AlgoSettings,
         ID_RendSettings,
         ID_Next,
@@ -59,6 +60,7 @@ namespace genetic_gui
         double y_max = Y_MAX, y_min = Y_MIN;
         bool   show_legend = true;
         int    resolution = 500;
+        int    fps = 100;
         int    gl_attribs[3] = {WX_GL_SAMPLES, 4, 0};
     };
 
@@ -72,6 +74,8 @@ namespace genetic_gui
         std::function<genetic::Individ(genetic::Generation&)> selection_strategy;
         std::function<genetic::Individs(genetic::Individ, genetic::Individ)> recombination_strategy;
         std::function<genetic::Individ(genetic::Individ)> mutation_strategy;
+
+        bool verbose = false;
     };
 
     struct Frames

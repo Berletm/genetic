@@ -29,6 +29,27 @@ namespace genetic_gui
 
         leftVerticalSizer->AddSpacer(15);
 
+        wxStaticText* interval_label = new wxStaticText(panel, wxID_ANY, "Approximation interval [l;r]:");
+        leftVerticalSizer->Add(interval_label, 0, wxLEFT | wxALIGN_LEFT, 15);
+
+        wxBoxSizer* intervalSizer = new wxBoxSizer(wxHORIZONTAL);
+
+        wxFloatingPointValidator<double> interval_val(1);
+        interval_val.SetRange(-1000.0, 1000.0);
+
+        interval_left_ctrl = new wxTextCtrl(panel, wxID_ANY, "-10.0", wxDefaultPosition, wxSize(100, -1), 0, interval_val);
+        intervalSizer->Add(interval_left_ctrl, 0, wxLEFT, 2);
+
+        wxStaticText* semicolon = new wxStaticText(panel, wxID_ANY, ";");
+        intervalSizer->Add(semicolon, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5);
+
+        interval_right_ctrl = new wxTextCtrl(panel, wxID_ANY, "10.0", wxDefaultPosition, wxSize(100, -1), 0, interval_val);
+        intervalSizer->Add(interval_right_ctrl, 0, wxLEFT, 5);
+
+        leftVerticalSizer->Add(intervalSizer, 0, wxLEFT | wxALIGN_LEFT, 15);
+
+        leftVerticalSizer->AddSpacer(15);
+
         // Generation size
         wxStaticText* generation_label = new wxStaticText(panel, wxID_ANY, "Generation size:");
         leftVerticalSizer->Add(generation_label, 0, wxLEFT | wxALIGN_LEFT, 15);
@@ -116,9 +137,10 @@ namespace genetic_gui
 
         leftVerticalSizer->Add(probSizer, 0, wxLEFT, 0);
 
-        leftVerticalSizer->AddSpacer(30);
+        leftVerticalSizer->AddSpacer(15);
 
         // Compute button
+        leftVerticalSizer->AddStretchSpacer(1);
         wxButton *compute_btn = new wxButton(panel, wxID_ANY, "Compute");
         leftVerticalSizer->Add(compute_btn, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 15);
         leftVerticalSizer->AddSpacer(20);
@@ -127,8 +149,8 @@ namespace genetic_gui
 
         wxBoxSizer* rightVerticalSizer = new wxBoxSizer(wxVERTICAL);
         
-        rightVerticalSizer->AddSpacer(20 + poly_label->GetSize().GetHeight() - 25); 
-        
+        rightVerticalSizer->AddSpacer(20);      
+
         // Evolution
         wxStaticText* phasesLabel = new wxStaticText(panel, wxID_ANY, "Evolution phases");
         rightVerticalSizer->Add(phasesLabel, 0, wxLEFT | wxALIGN_LEFT, 15);
@@ -184,7 +206,8 @@ namespace genetic_gui
         recomb_p_ctrl->Bind(wxEVT_TEXT, &NewFrame::OnNumberInput, this);
         mutation_p_ctrl->Bind(wxEVT_TEXT, &NewFrame::OnNumberInput, this);
         epsilon_ctrl->Bind(wxEVT_TEXT, &NewFrame::OnNumberInput, this);
-        compute_btn->Bind(wxEVT_BUTTON, &NewFrame::Compute, this);
+        compute_btn->Bind(wxEVT_BUTTON, &NewFrame::OnCompute, this);
+
 
         this->Bind(wxEVT_CLOSE_WINDOW, &NewFrame::OnClose, this);
 

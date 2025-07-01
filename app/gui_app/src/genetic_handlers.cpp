@@ -1,5 +1,6 @@
 #include "genetic_frame.hpp"
 #include "file_frames.hpp"
+#include "settings_frames.hpp"
 #include <evolution.hpp>
 #include <sstream>
 #include <string>
@@ -18,6 +19,12 @@ namespace genetic_gui
         {
             frames.rendFrame->Destroy();
             frames.rendFrame = nullptr;
+        }
+
+        if (frames.newFrame)
+        {
+            frames.newFrame->Destroy();
+            frames.newFrame = nullptr;
         }
         
         timer.Stop();
@@ -47,12 +54,14 @@ namespace genetic_gui
 
     void GeneticFrame::RendSettings(wxCommandEvent& event)
     {
-        
+        frames.rendFrame->Show();
+        frames.rendFrame->SetFocus();
     }
 
     void GeneticFrame::AlgoSettings(wxCommandEvent& event)
     {
-
+        frames.algoFrame->Show();
+        frames.algoFrame->SetFocus();
     }
 
     void GeneticFrame::Next(wxCommandEvent& event)
@@ -140,12 +149,26 @@ namespace genetic_gui
         return res;
     }
 
-    void NewFrame::Compute(wxCommandEvent& event)
+    void NewFrame::OnCompute(wxCommandEvent& event)
     {
         auto poly_temp = poly_ctrl->GetValue().ToStdString();
 
         poly = ParsePoly(poly_temp);
-        
+
+        double left, right;
+        interval_left_ctrl->GetValue().ToDouble(&left);
+        interval_right_ctrl->GetValue().ToDouble(&right);
+        algo_settings.interval = genetic::Interval{left, right};
+
+        double padding_factor = 1.2;
+
+        render_settings.x_max = std::max(abs(left), abs(right)) * padding_factor;
+        render_settings.x_min = -render_settings.x_max;
+
+        render_settings.y_max = poly.eval(render_settings.x_max) * padding_factor;
+        double temp = poly.eval(render_settings.x_min);
+        render_settings.y_min = temp > 0 ? temp * -1 * padding_factor: temp * padding_factor;
+
         int generation;
         generation_size_ctrl->GetValue().ToInt(&generation);
         algo_settings.generation_size = generation;
@@ -176,6 +199,17 @@ namespace genetic_gui
 
         geneticframe->StartAlgo();
 
+        this->Hide();
+    }
+
+
+    void AlgoSettingsFrame::OnClose(wxCloseEvent& event)
+    {
+        this->Hide();
+    }
+
+    void RendSettingsFrame::OnClose(wxCloseEvent& event)
+    {
         this->Hide();
     }
 }

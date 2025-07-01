@@ -174,6 +174,6 @@ namespace genetic_gui
         controller.AddObserver(fitnessplot);
 
         timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
-        timer.Start(100); // 10 FPS
+        timer.Start(render_settings.fps);
     }
 }

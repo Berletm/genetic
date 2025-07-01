@@ -15,7 +15,7 @@ namespace genetic_gui
     {
     private:
         // event handlers
-        void Compute(wxCommandEvent& event);
+        void OnCompute(wxCommandEvent& event);
         void OnNumberInput(wxCommandEvent& event);
         void OnClose(wxCloseEvent& event);
 
@@ -35,6 +35,9 @@ namespace genetic_gui
         wxTextCtrl *recomb_p_ctrl;
         wxTextCtrl *mutation_p_ctrl;
         wxTextCtrl *epsilon_ctrl;
+
+        wxTextCtrl* interval_left_ctrl;
+        wxTextCtrl* interval_right_ctrl;
 
         wxComboBox *selectionComboBox;
         wxComboBox *recombinationComboBox;

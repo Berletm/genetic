@@ -8,9 +8,9 @@ namespace genetic_gui
 {
     bool GeneticApp::OnInit()
     {
-        frames.mainFrame = new GeneticFrame(nullptr, wxID_ANY, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX));
-        frames.algoFrame = new AlgoSettingsFrame();
-        frames.rendFrame = new RendSettingsFrame();
+        frames.mainFrame = new GeneticFrame(nullptr, ID_Main, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX));
+        frames.algoFrame = new AlgoSettingsFrame(nullptr, ID_AlgoSettings, "Algorithm", wxDefaultPosition, wxDefaultSize, 0);
+        frames.rendFrame = new RendSettingsFrame(nullptr, ID_RendSettings, "Rendering", wxDefaultPosition, wxDefaultSize, 0);
         frames.newFrame  = new NewFrame(frames.mainFrame, nullptr, ID_New, "New", wxDefaultPosition, wxDefaultSize, 0);
 
         frames.mainFrame->Show(true);

@@ -40,7 +40,8 @@ namespace genetic_gui
             algo_settings.mutation_p,
             algo_settings.selection_strategy,
             algo_settings.recombination_strategy,
-            algo_settings.mutation_strategy);
+            algo_settings.mutation_strategy,
+            algo_settings.verbose);
 
         genetic::measure_generation(poly, current_generation);
 
