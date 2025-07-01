@@ -7,6 +7,17 @@
 
 namespace genetic_gui
 {
+    BEGIN_EVENT_TABLE(GeneticFrame, wxFrame)
+        EVT_CLOSE(GeneticFrame::OnClose)
+        EVT_MENU(ID_New, GeneticFrame::New)
+        EVT_MENU(ID_Save, GeneticFrame::Save)
+        EVT_MENU(ID_Load, GeneticFrame::Load)
+        EVT_MENU(ID_RendSettings, GeneticFrame::RendSettings)
+        EVT_MENU(ID_AlgoSettings, GeneticFrame::AlgoSettings)
+        EVT_BUTTON(ID_Next, GeneticFrame::Next)
+        EVT_BUTTON(ID_Next, GeneticFrame::Prev)
+    END_EVENT_TABLE()
+
     wxBitmap CreateNextBitmap(int width, int height, const wxColour& color) 
     {
         wxBitmap bmp(width, height, 32);
@@ -69,7 +80,7 @@ namespace genetic_gui
         return bmp;
     }
 
-    GeneticFrame::GeneticFrame(): wxFrame(NULL, wxID_ANY, "Genetic", wxDefaultPosition, wxSize(WIDTH, HEIGHT), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX))
+    GeneticFrame::GeneticFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style):  wxFrame(parent, id, title, pos, size, style)
     {        
         const wxColour textColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
 
@@ -80,7 +91,7 @@ namespace genetic_gui
 
         wxBitmapButton *btn_next = new wxBitmapButton(
                 statusbar, 
-                wxID_ANY, 
+                ID_Next, 
                 next_bmp,
                 wxDefaultPosition,
                 wxDefaultSize,
@@ -95,7 +106,7 @@ namespace genetic_gui
 
         wxBitmapButton *btn_prev = new wxBitmapButton(
                 statusbar, 
-                wxID_ANY, 
+                ID_Prev, 
                 prev_bmp,
                 wxDefaultPosition,
                 wxDefaultSize,
@@ -112,19 +123,17 @@ namespace genetic_gui
         menubar->Append(file, _("File"));
         menubar->Append(settings, _("Settings"));
         
-        wxMenuItem *newfile = new wxMenuItem(file, wxID_ANY, _("New"), _("Start new session"), wxITEM_NORMAL); 
-        wxMenuItem *save    = new wxMenuItem(file, wxID_ANY, _("Save"), _("Save current session"), wxITEM_NORMAL);
-        wxMenuItem *load    = new wxMenuItem(file, wxID_ANY, _("Load"), _("Load saved session"), wxITEM_NORMAL);
+        wxMenuItem *newfile = new wxMenuItem(file, ID_New, _("New"), _("Start new session"), wxITEM_NORMAL); 
+        wxMenuItem *save    = new wxMenuItem(file, ID_Save, _("Save"), _("Save current session"), wxITEM_NORMAL);
+        wxMenuItem *load    = new wxMenuItem(file, ID_Load, _("Load"), _("Load saved session"), wxITEM_NORMAL);
         file->Append(newfile);
         file->Append(save);
         file->Append(load);
 
-        wxMenuItem *algorithm_settings = new wxMenuItem(settings, wxID_ANY, _("Algorithm"), _("Algorithm settings"), wxITEM_NORMAL);
-        wxMenuItem *rendering_settings = new wxMenuItem(settings, wxID_ANY, _("Rendering"), _("Rendering settings"), wxITEM_NORMAL);
+        wxMenuItem *algorithm_settings = new wxMenuItem(settings, ID_AlgoSettings, _("Algorithm"), _("Algorithm settings"), wxITEM_NORMAL);
+        wxMenuItem *rendering_settings = new wxMenuItem(settings, ID_RendSettings, _("Rendering"), _("Rendering settings"), wxITEM_NORMAL);
         settings->Append(rendering_settings);
         settings->Append(algorithm_settings);
-
-        controller.InitAlgo();
 
         wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
     
@@ -144,12 +153,6 @@ namespace genetic_gui
         fitnessplot_panel->SetSizer(fitnessplot_sizer);
         main_sizer->Add(fitnessplot_panel, 1, wxALL|wxEXPAND, 2);
 
-        controller.AddObserver(algoplot);
-        controller.AddObserver(fitnessplot);
-
-        timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
-        timer.Start(100); // 10 FPS
-
         this->SetMenuBar(menubar);
         this->SetSizer(main_sizer);
         this->Fit();
@@ -162,5 +165,15 @@ namespace genetic_gui
             timer.Stop();
             wxMessageBox("Algorithm finished!");
         }
+    }
+
+    void GeneticFrame::StartAlgo()
+    {
+        controller.InitAlgo();
+        controller.AddObserver(algoplot);
+        controller.AddObserver(fitnessplot);
+
+        timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
+        timer.Start(render_settings.fps);
     }
 }

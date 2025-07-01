@@ -61,8 +61,7 @@ protected:
     void PrepareForRendering() override;
     void RenderData() override;
     void RenderAxes() override;
-    void RenderGrid() override;
-
+    
 public:
     FitnessPlot(wxWindow *parent, GeneticController* ctr);
 };

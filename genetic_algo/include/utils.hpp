@@ -7,10 +7,32 @@
 #include <math.h>
 
 #define ALPHA_INTERVAL 0.25f
-#define EPSILON 0.005 
+#define EPSILON 0.00001 
 
 namespace genetic
-{
+{   
+    enum class SelectionMethod
+    {
+        Roulette,
+        LinearScaling,
+        SigmaScaling,
+        SoftmaxScaling,
+        ExponentialScaling
+    };
+
+    enum class RecombinationMethod
+    {
+        SinglePoint,
+        Arithmetic
+    };
+
+    enum class MutationMethod 
+    {
+        Swap,
+        Gauss,
+        Perturbation
+    };
+
     struct Gene
     {
         double height;
@@ -109,7 +131,7 @@ namespace genetic
     }
 
     inline void measure_generation(const Polynomial& poly, Generation& current_generation)
-    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ, individ.begin()->interval.second - individ.begin()->interval.first); }
+    { for (auto& individ: current_generation) individ.fitness = fitness(poly, individ); }
 
     inline double mean_fitness(const Generation& current_generation)
     {
