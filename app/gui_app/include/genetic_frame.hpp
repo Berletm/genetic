@@ -27,6 +27,7 @@ namespace genetic_gui
         void AlgoSettings(wxCommandEvent& event);
         void Prev(wxCommandEvent& event);
         void Next(wxCommandEvent& event);
+        void Stop(wxCommandEvent& event);
     private:
         wxStatusBar *statusbar;
         wxMenuBar   *menubar;

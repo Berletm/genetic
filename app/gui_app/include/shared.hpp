@@ -51,7 +51,8 @@ namespace genetic_gui
         ID_AlgoSettings,
         ID_RendSettings,
         ID_Next,
-        ID_Prev
+        ID_Prev,
+        ID_Stop
     };
 
     struct RenderingSettings

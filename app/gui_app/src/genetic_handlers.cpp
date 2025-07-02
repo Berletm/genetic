@@ -74,6 +74,11 @@ namespace genetic_gui
 
     }
 
+    void GeneticFrame::Stop(wxCommandEvent& event)
+    {
+        
+    }
+
     void NewFrame::OnNumberInput(wxCommandEvent& event) 
     {
         wxTextCtrl* ctrl = dynamic_cast<wxTextCtrl*>(event.GetEventObject());
@@ -160,14 +165,14 @@ namespace genetic_gui
         interval_right_ctrl->GetValue().ToDouble(&right);
         algo_settings.interval = genetic::Interval{left, right};
 
-        double padding_factor = 1.2;
+        double padding_factor = 1.1;
 
         render_settings.x_max = std::max(abs(left), abs(right)) * padding_factor;
         render_settings.x_min = -render_settings.x_max;
 
         render_settings.y_max = poly.eval(render_settings.x_max) * padding_factor;
         double temp = poly.eval(render_settings.x_min);
-        render_settings.y_min = temp > 0 ? temp * -1 * padding_factor: temp * padding_factor;
+        render_settings.y_min = temp > 0 ? temp * -1: temp;
 
         int generation;
         generation_size_ctrl->GetValue().ToInt(&generation);
