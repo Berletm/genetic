@@ -1,5 +1,6 @@
 #include "settings_frames.hpp"
-
+#include "shared.hpp"
+#include <wx/valnum.h>
 
 namespace genetic_gui
 {
@@ -12,15 +13,18 @@ namespace genetic_gui
         main_sizer->AddSpacer(10);
         
         wxBoxSizer* delta_sigma_sizer = new wxBoxSizer(wxHORIZONTAL);
-        
+            
+        wxFloatingPointValidator<double> val(1);
+        val.SetRange(1.0, 100.0);
+
         wxStaticText* delta_label = new wxStaticText(panel, wxID_ANY, "Delta:");
-        delta_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25));
+        delta_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25), 0, val);
         wxBoxSizer* delta_sizer = new wxBoxSizer(wxVERTICAL);
         delta_sizer->Add(delta_label, 0, wxALL | wxALIGN_LEFT, 2);
         delta_sizer->Add(delta_ctrl, 0, wxALL | wxALIGN_LEFT, 2);
         
         wxStaticText* sigma_label = new wxStaticText(panel, wxID_ANY, "Sigma:");
-        sigma_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25));
+        sigma_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25), 0, val);
         wxBoxSizer* sigma_sizer = new wxBoxSizer(wxVERTICAL);
         sigma_sizer->Add(sigma_label, 0, wxALL | wxALIGN_LEFT, 2);
         sigma_sizer->Add(sigma_ctrl, 0, wxALL | wxALIGN_LEFT, 2);
@@ -28,17 +32,21 @@ namespace genetic_gui
         delta_sigma_sizer->Add(delta_sizer, 0, wxALL, 15);
         delta_sigma_sizer->Add(sigma_sizer, 0, wxALL, 15);
         
+        wxFloatingPointValidator<double> scaling_val(1);
+        scaling_val.SetRange(1.0, 1000.0);
+
         wxStaticText* scalingLabel = new wxStaticText(panel, wxID_ANY, "Max Scaling:");
-        m_scalingCtrl = new wxTextCtrl(panel, wxID_ANY, "100.0", wxDefaultPosition, wxSize(80, 25));
+        scaling_ctrl = new wxTextCtrl(panel, wxID_ANY, "100.0", wxDefaultPosition, wxSize(80, 25), 0, scaling_val);
         
-        m_verboseCtrl = new wxCheckBox(panel, wxID_ANY, "Verbose");
+        verbose_ctrl = new wxCheckBox(panel, wxID_ANY, "Verbose");
+        verbose_ctrl->SetValue(true);
         
         wxButton* apply_btn = new wxButton(panel, wxID_APPLY, "Apply");
 
         main_sizer->Add(delta_sigma_sizer, 0, wxALL | wxCENTER, 10);
         main_sizer->Add(scalingLabel, 0, wxALL | wxCENTER, 5);
-        main_sizer->Add(m_scalingCtrl, 0, wxALL | wxCENTER, 5);
-        main_sizer->Add(m_verboseCtrl, 0, wxALL | wxCENTER, 10);
+        main_sizer->Add(scaling_ctrl, 0, wxALL | wxCENTER, 5);
+        main_sizer->Add(verbose_ctrl, 0, wxALL | wxCENTER, 10);
         main_sizer->AddSpacer(15);
         main_sizer->Add(apply_btn, 0, wxALL | wxCENTER, 10);
         main_sizer->AddSpacer(10);
@@ -61,17 +69,20 @@ namespace genetic_gui
         wxPanel* panel = new wxPanel(this);
         
         show_legend_check = new wxCheckBox(panel, wxID_ANY, "Show legend");
+        show_legend_check->SetValue(true);
         multisampling_check = new wxCheckBox(panel, wxID_ANY, "Multisampling");
+        multisampling_check->SetValue(true); 
+        
         
         wxStaticText* resolutionLabel = new wxStaticText(panel, wxID_ANY, "Resolution:");
         resolution_spin = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString, 
                                         wxDefaultPosition, wxDefaultSize,
-                                        wxSP_ARROW_KEYS, 100, 1500, 500);
+                                        wxSP_ARROW_KEYS, 10, 500, 50);
         
         wxStaticText* fpsLabel = new wxStaticText(panel, wxID_ANY, "FPS:");
         fps_spin = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString,
                                 wxDefaultPosition, wxDefaultSize,
-                                wxSP_ARROW_KEYS, 50, 240, 100);
+                                wxSP_ARROW_KEYS, 15, 120, 30);
         
         apply_btn = new wxButton(panel, wxID_OK, "Apply");
         
@@ -105,6 +116,6 @@ namespace genetic_gui
         SetMinSize(GetSize());
         
         this->Bind(wxEVT_CLOSE_WINDOW, &RendSettingsFrame::OnClose, this);
+        this->apply_btn->Bind(wxEVT_COMMAND_BUTTON_CLICKED, &RendSettingsFrame::OnApply, this);
     }
-
 }

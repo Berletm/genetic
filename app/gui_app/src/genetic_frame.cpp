@@ -209,18 +209,22 @@ namespace genetic_gui
 
     void GeneticFrame::OnTimer(wxTimerEvent&) 
     {
-        if (best_individ_history.size() > 0 && mean_fitness_history.size() > 0)
+        if (best_individ_history.size() > 0 && mean_fitness_history.size() > 0 && algo_settings.verbose)
         {
             std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 
                              mean_fitness_history.back(), 
                              best_individ_history.back().fitness);
             statusbar->SetStatusText(str);
         }
+        else
+        {
+            statusbar->SetStatusText("Algorithm is working...");
+        }
 
         if (!controller.MakeStep()) 
         {
             timer.Stop();
-            std::string str = std::format("Algorithm successfully ended. Best fitness: {:.2f}", best_individ_history.back().fitness);
+            std::string str = std::format("Algorithm successfully ended! Best fitness: {:.2f}", best_individ_history.back().fitness);
             statusbar->SetStatusText(str);
         }
     }
@@ -232,6 +236,6 @@ namespace genetic_gui
         controller.AddObserver(fitnessplot);
 
         timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
-        timer.Start(render_settings.fps);
+        timer.Start(1000 / render_settings.fps);
     }
 }

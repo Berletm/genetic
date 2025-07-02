@@ -3,15 +3,17 @@
 
 static std::random_device rd;
 static std::mt19937 generator(rd());
-static std::uniform_real_distribution udist(0.0, 1.0);
+static std::uniform_real_distribution<double> udist(0.0, 1.0);
+static std::uniform_real_distribution<double> perturbation_dist(-DELTA, +DELTA);
+static std::normal_distribution<double> ndist(0, SIGMA);
 
-#define DELTA 1.0
-#define SIGMA 1.0
 
 namespace genetic
 {
-    Generation mutation(double mutation_proba, Generation& current_generation, std::function<Individ(Individ)> mutation_strategy)
+    Generation mutation(double mutation_proba, Generation& current_generation, std::function<Individ(Individ)> mutation_strategy, double delta, double sigma)
     {
+        if (delta != DELTA || sigma != SIGMA) set_distribution(delta,  sigma);
+
         Generation offspring;
 
         for (auto individ: current_generation) 
@@ -27,6 +29,13 @@ namespace genetic
         }
 
         return offspring;
+    }
+
+    void set_distribution(double delta, double sigma)
+    {
+        perturbation_dist = std::uniform_real_distribution<double>(-std::abs(delta), +std::abs(delta));
+
+        ndist             = std::normal_distribution<double>(0.0, std::abs(sigma));
     }
 
     Individ swap_mutation(Individ individ)
@@ -47,8 +56,6 @@ namespace genetic
 
     Individ perturbation_mutation(Individ individ)
     {
-        std::uniform_real_distribution<double> perturbation_dist(-DELTA, +DELTA);
-        
         for (auto& gene: individ)
         {
             gene.height += perturbation_dist(generator);
@@ -59,8 +66,6 @@ namespace genetic
 
     Individ gauss_mutation(Individ individ)
     {
-        std::normal_distribution<double> ndist(0, SIGMA);
-
         for (auto& gene: individ)
         {
             gene.height += ndist(generator);

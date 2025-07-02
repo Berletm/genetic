@@ -163,7 +163,12 @@ namespace genetic_gui
         double left, right;
         interval_left_ctrl->GetValue().ToDouble(&left);
         interval_right_ctrl->GetValue().ToDouble(&right);
-        algo_settings.interval = genetic::Interval{left, right};
+        if (left == right)
+        {   
+            wxMessageBox("Wrong interval!", "Error", wxOK | wxICON_ERROR);
+            return;
+        }
+        algo_settings.interval = genetic::Interval{std::min(left, right), std::max(left, right)};
 
         double padding_factor = 1.1;
 
@@ -172,7 +177,7 @@ namespace genetic_gui
 
         render_settings.y_max = poly.eval(render_settings.x_max) * padding_factor;
         double temp = poly.eval(render_settings.x_min);
-        render_settings.y_min = temp > 0 ? temp * -1: temp;
+        render_settings.y_min = temp > 0 ? temp * -1 * padding_factor: temp * padding_factor;
 
         int generation;
         generation_size_ctrl->GetValue().ToInt(&generation);
@@ -215,11 +220,77 @@ namespace genetic_gui
 
     void AlgoSettingsFrame::OnApply(wxCommandEvent &event)
     {
-        
+        algo_settings.verbose = verbose_ctrl->GetValue();
+
+        double scaling;
+        scaling_ctrl->GetValue().ToDouble(&scaling);
+        if (scaling > 0)
+        {
+            algo_settings.max_after_scaling = scaling;
+        }
+        else
+        {
+            wxMessageBox("Wrong scaling!", "Error", wxOK | wxICON_ERROR);
+            return;
+        }
+
+        selection_map[genetic::SelectionMethod::LinearScaling] = 
+        [max_after_scaling = algo_settings.max_after_scaling](genetic::Generation& gen) {
+            if(!gen.is_scaled) apply_scaling(genetic::ScalingType::linear, gen, max_after_scaling);
+            return roulette_rule(gen);
+        };
+
+        double delta, sigma;
+
+        delta_ctrl->GetValue().ToDouble(&delta);
+
+        algo_settings.delta = delta;
+
+        sigma_ctrl->GetValue().ToDouble(&sigma);
+
+        algo_settings.sigma = sigma;
+
+        this->Hide();
     }
 
     void RendSettingsFrame::OnClose(wxCloseEvent& event)
     {
+        this->Hide();
+    }
+
+    void RendSettingsFrame::OnApply(wxCommandEvent &event)
+    {
+        int fps = fps_spin->GetValue();
+        render_settings.fps = fps;
+        
+        int res = resolution_spin->GetValue();
+        render_settings.resolution = res;
+
+        if (multisampling_check->IsChecked()) 
+        {
+            render_settings.gl_attribs[0] = WX_GL_SAMPLES;
+            render_settings.gl_attribs[1] = 4;
+            render_settings.gl_attribs[2] = 0;
+        }
+        else 
+        {
+            render_settings.gl_attribs[0] = 0;
+        }
+
+        render_settings.show_legend = show_legend_check->IsChecked();
+
+        frames.mainFrame->algoplot->ApplyRenderSettings();
+        frames.mainFrame->algoplot->Refresh();
+
+        if (frames.mainFrame->timer.IsRunning())
+        {
+            frames.mainFrame->timer.Stop();
+
+            int interval = (render_settings.fps > 0) ? (1000 / render_settings.fps) : 100;
+
+            frames.mainFrame->timer.Start(interval);
+        }
+
         this->Hide();
     }
 }

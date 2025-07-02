@@ -5,7 +5,6 @@
 
 static std::random_device rd;
 static std::mt19937 generator(rd());
-static constexpr double max_after_scaling = 100.0;
 
 namespace genetic
 {
@@ -36,7 +35,7 @@ namespace genetic
         return current_generation[static_cast<int>(dist(generator))];
     }
 
-    void apply_scaling(ScalingType type, Generation& current_generation)
+    void apply_scaling(ScalingType type, Generation& current_generation, double max_after_scaling)
     {
         switch (type)
         {

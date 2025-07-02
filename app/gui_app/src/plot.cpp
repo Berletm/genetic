@@ -14,14 +14,19 @@ namespace genetic_gui
     Plot::Plot(wxWindow *parent, GeneticController *ctr)
     : wxGLCanvas(
         parent, wxID_ANY, 
-        nullptr,  
+        render_settings.gl_attribs[0] == 0 ? nullptr : render_settings.gl_attribs,  
         wxDefaultPosition, 
         wxDefaultSize, 
         wxFULL_REPAINT_ON_RESIZE), context(this), controller(ctr)
     {
-        wxGLAttributes attrs;
-        attrs.PlatformDefaults().EndList();
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    }
+
+    void Plot::ApplyRenderSettings()
+    {
+        SetCurrent(context);
+        if (render_settings.gl_attribs[0] == WX_GL_SAMPLES) glEnable(GL_MULTISAMPLE);
+        else glDisable(GL_MULTISAMPLE);
     }
 
     void Plot::RenderGrid()
@@ -79,59 +84,39 @@ namespace genetic_gui
         glLineWidth(2.0f);
         glBegin(GL_LINES);
 
-        if (render_settings.y_min <= 0 && render_settings.y_max >= 0)
-        {
-            glVertex2f(render_settings.x_min, 0.0f);
-            glVertex2f(render_settings.x_max, 0.0f);
-        }
+        glVertex2f(x_min, 0.0f);
+        glVertex2f(x_max, 0.0f);
 
-        if (render_settings.x_min <= 0 && render_settings.x_max >= 0)
-        {
-            glVertex2f(0.0f, render_settings.y_min);
-            glVertex2f(0.0f, render_settings.y_max);
-        }
+        glVertex2f(0.0f, y_min);
+        glVertex2f(0.0f, y_max);
 
         glEnd();
         glLineWidth(1.0f);
 
-        float arrow_size_x = (render_settings.x_max - render_settings.x_min) * 0.015f;
-        float arrow_size_y = (render_settings.y_max - render_settings.y_min) * 0.02f;
+        float arrow_size_x = (x_max - x_min) * 0.015f;
+        float arrow_size_y = (y_max - y_min) * 0.02f;
 
         glBegin(GL_TRIANGLES);
 
-        if (render_settings.y_min <= 0 && render_settings.y_max >= 0)
-        {
-            float y = 0.0f;
-            float x = render_settings.x_max * x_scale_factor;
-            glVertex2f(x, y);
-            glVertex2f(x - arrow_size_x, y + arrow_size_y / 2);
-            glVertex2f(x - arrow_size_x, y - arrow_size_y / 2);
-        }
+        float y_axis = 0.0f;
+        float x_arrow = x_max;
+        glVertex2f(x_arrow, y_axis);
+        glVertex2f(x_arrow - arrow_size_x, y_axis + arrow_size_y / 2);
+        glVertex2f(x_arrow - arrow_size_x, y_axis - arrow_size_y / 2);
 
-        if (render_settings.x_min <= 0 && render_settings.x_max >= 0)
-        {
-            float x = 0.0f;
-            float y = render_settings.y_max;
-            glVertex2f(x, y);
-            glVertex2f(x - arrow_size_x / 2, y - arrow_size_y);
-            glVertex2f(x + arrow_size_x / 2, y - arrow_size_y);
-        }
+        float x_axis = 0.0f;
+        float y_arrow = y_max;
+        glVertex2f(x_axis, y_arrow);
+        glVertex2f(x_axis - arrow_size_x / 2, y_arrow - arrow_size_y);
+        glVertex2f(x_axis + arrow_size_x / 2, y_arrow - arrow_size_y);
 
         glEnd();
     }
 
-    void Plot::UpdatePlotParameters(double center, double range, double ymin, double ymax) 
-    {
-        x_center = center;
-        x_range = range;
-        y_min = ymin;
-        y_max = ymax;
-    }
-
     void Plot::PrepareForRendering() 
     {
-        x_center = (x_min + x_max) / 2.0;
-        x_range = (x_max - x_min) * x_scale_factor;
+        x_min = render_settings.x_min;
+        x_max = render_settings.x_max;
         y_min = render_settings.y_min;
         y_max = render_settings.y_max;
     }
@@ -157,8 +142,7 @@ namespace genetic_gui
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         
-        gluOrtho2D(x_center - x_range/2, x_center + x_range/2, 
-                y_min, y_max);
+        gluOrtho2D(x_min, x_max, y_min, y_max);
         
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -188,9 +172,9 @@ namespace genetic_gui
         glColor3f(1.0f, 0.0f, 0.0f);
         glBegin(GL_LINE_STRIP);
 
-        double dx = (render_settings.x_max - render_settings.x_min) / render_settings.resolution;
+        double dx = (x_max - x_min) / render_settings.resolution;
 
-        for (double x = render_settings.x_min; x <= render_settings.x_max; x += dx) 
+        for (double x = x_min; x <= x_max; x += dx) 
         {
             glVertex2f(x, poly.eval(x));
         }

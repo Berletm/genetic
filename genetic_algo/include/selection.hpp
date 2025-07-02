@@ -26,7 +26,7 @@ namespace genetic
 
     Individ    roulette_rule(Generation& current_generation);
 
-    void       apply_scaling(ScalingType type, Generation& current_generation);
+    void       apply_scaling(ScalingType type, Generation& current_generation, double max_after_scaling = 100.0);
 
     template <ScalingType type = ScalingType::linear>
     inline Individ scaling_rule(Generation& current_generation)

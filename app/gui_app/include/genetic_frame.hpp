@@ -34,6 +34,8 @@ namespace genetic_gui
         wxMenu      *file;
         wxMenu      *settings;
 
+        void OnTimer(wxTimerEvent&);
+    public:
         GeneticController controller;
 
         wxBoxSizer  *algoplot_sizer;
@@ -45,8 +47,6 @@ namespace genetic_gui
         Plot        *fitnessplot;
 
         wxTimer timer;
-
-        void OnTimer(wxTimerEvent&);
     };
 }
 

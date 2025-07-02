@@ -22,8 +22,6 @@ protected:
     double x_center = (x_min + x_max) / 2.0;
     double x_range = (x_max - x_min) * x_scale_factor;
 
-    void UpdatePlotParameters(double center, double range, double ymin, double yma);
-
     virtual void PrepareForRendering();
     virtual void RenderGrid();
     virtual void RenderAxes();
@@ -36,6 +34,8 @@ public:
     inline void SetController(GeneticController* ctrl) { controller = ctrl; }
     inline GeneticController* GetController() const { return controller; }
 
+    void ApplyRenderSettings();
+
     Plot(wxWindow *parent, GeneticController *ctrl);
 
     DECLARE_EVENT_TABLE()
@@ -45,7 +45,6 @@ class AlgoPlot: public Plot
 {
 protected:
     void RenderData() override;
-
 public:
     AlgoPlot(wxWindow *parent, GeneticController* ctrl);
 };

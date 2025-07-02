@@ -19,6 +19,8 @@ namespace genetic_gui
         current_epoch = 0;
         mean_fitness = std::numeric_limits<double>::infinity();
 
+        genetic::set_distribution(algo_settings.interval, poly);
+
         current_generation = genetic::generate_generation(
             algo_settings.generation_size, 
             algo_settings.chromosome_size, 
@@ -46,6 +48,8 @@ namespace genetic_gui
             algo_settings.selection_strategy,
             algo_settings.recombination_strategy,
             algo_settings.mutation_strategy,
+            algo_settings.delta,
+            algo_settings.sigma,
             algo_settings.verbose);
 
         genetic::measure_generation(poly, current_generation);

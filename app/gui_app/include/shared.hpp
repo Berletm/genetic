@@ -21,8 +21,8 @@ namespace genetic_gui
     static std::unordered_map<genetic::SelectionMethod, std::function<genetic::Individ(genetic::Generation&)>> selection_map = 
     {
         {genetic::SelectionMethod::Roulette, genetic::roulette_rule},
-        {genetic::SelectionMethod::LinearScaling, [](genetic::Generation& gen) { return genetic::scaling_rule<genetic::ScalingType::linear>(gen);}},
-        {genetic::SelectionMethod::SigmaScaling, [](genetic::Generation& gen) { return genetic::scaling_rule<genetic::ScalingType::sigma>(gen);}},
+        {genetic::SelectionMethod::LinearScaling, genetic::scaling_rule<genetic::ScalingType::linear>},
+        {genetic::SelectionMethod::SigmaScaling, genetic::scaling_rule<genetic::ScalingType::sigma>},
         {genetic::SelectionMethod::SoftmaxScaling, genetic::scaling_rule<genetic::ScalingType::softmax>},
         {genetic::SelectionMethod::ExponentialScaling, genetic::scaling_rule<genetic::ScalingType::exponential>}
     };
@@ -60,8 +60,8 @@ namespace genetic_gui
         double x_max = X_MAX, x_min = X_MIN;
         double y_max = Y_MAX, y_min = Y_MIN;
         bool   show_legend = true;
-        int    resolution = 500;
-        int    fps = 100;
+        int    resolution = 10;
+        int    fps = 15;
         int    gl_attribs[3] = {WX_GL_SAMPLES, 4, 0};
     };
 
@@ -76,7 +76,10 @@ namespace genetic_gui
         std::function<genetic::Individs(genetic::Individ, genetic::Individ)> recombination_strategy;
         std::function<genetic::Individ(genetic::Individ)> mutation_strategy;
 
-        bool verbose = false;
+        bool verbose = true;
+
+        double max_after_scaling = 100;
+        double delta = 1.0, sigma = 1.0;
     };
 
     struct Frames
@@ -95,8 +98,6 @@ namespace genetic_gui
 
     extern std::vector<double>           mean_fitness_history;
     extern std::vector<genetic::Individ> best_individ_history;
-
-    void initialize_globals(const genetic::Polynomial& initial_poly, const AlgoSettings& settings);
 }
 
 #endif // SHARED_HPP 
