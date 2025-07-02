@@ -7,11 +7,13 @@ namespace genetic_gui
     GeneticController::GeneticController():
     mean_fitness(0.0), 
     delta_fitness(std::numeric_limits<double>::infinity()),
-    current_epoch(0)
+    current_epoch(0),
+    is_running(false)
     {}
 
     void GeneticController::InitAlgo()
     {   
+        is_running = true;
         mean_fitness_history.clear();
         best_individ_history.clear();
         current_epoch = 0;
@@ -31,7 +33,10 @@ namespace genetic_gui
     bool GeneticController::MakeStep()
     {   
         if (mean_fitness_history.size() >= 2) delta_fitness = mean_fitness_history[mean_fitness_history.size() - 2] - mean_fitness_history[mean_fitness_history.size() - 1]; 
-        if (current_epoch >= algo_settings.n_epoch || mean_fitness <= algo_settings.epsilon) return false;
+        if (current_epoch >= algo_settings.n_epoch || mean_fitness <= algo_settings.epsilon)
+        {
+            return false;
+        }
 
         current_generation = genetic::evolution_step(
             poly,

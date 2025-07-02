@@ -2,8 +2,7 @@
 
 #include <wx/artprov.h>
 #include <wx/graphics.h>
-
-
+#include <format>
 
 namespace genetic_gui
 {
@@ -160,10 +159,19 @@ namespace genetic_gui
 
     void GeneticFrame::OnTimer(wxTimerEvent&) 
     {
+        if (best_individ_history.size() > 0 && mean_fitness_history.size() > 0)
+        {
+            std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 
+                             mean_fitness_history.back(), 
+                             best_individ_history.back().fitness);
+            statusbar->SetStatusText(str);
+        }
+
         if (!controller.MakeStep()) 
         {
             timer.Stop();
-            wxMessageBox("Algorithm finished!");
+            std::string str = std::format("Algorithm successfully ended. Best fitness: {:.2f}", best_individ_history.back().fitness);
+            statusbar->SetStatusText(str);
         }
     }
 

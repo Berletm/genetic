@@ -12,10 +12,10 @@ namespace genetic_gui
     {
     private:
         void OnClose(wxCloseEvent &event);
-
+        void OnApply(wxCommandEvent &event);
     private:
-        wxTextCtrl *m_deltaCtrl;
-        wxTextCtrl *m_sigmaCtrl;
+        wxTextCtrl *delta_ctrl;
+        wxTextCtrl *sigma_ctrl;
         wxTextCtrl *m_scalingCtrl;
         wxCheckBox *m_verboseCtrl;
 

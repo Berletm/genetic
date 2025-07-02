@@ -176,14 +176,13 @@ namespace genetic_gui
     END_EVENT_TABLE()
 
     // AlgoPlot
-    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController* ctr) : Plot(parent, ctr)
-    {
-
-    }
+    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController *ctr) : Plot(parent, ctr)
+    {}
 
     void AlgoPlot::RenderData()
     {
         if (!controller) return;
+        if (!controller->IsRunning()) return;
         
         glLineWidth(1.5f);
         glColor3f(1.0f, 0.0f, 0.0f);
@@ -217,16 +216,18 @@ namespace genetic_gui
     : Plot(parent, ctr)
     {
         SetXScaleFactor(0.5);
-        x_min = 0;
-        x_max = 10.0;
-        y_min = -1.0;
-        y_max = 1.0;
     }
 
     void FitnessPlot::PrepareForRendering() 
     {
-        if (!controller || mean_fitness_history.empty()) {
-            Plot::PrepareForRendering();
+        if (!controller || mean_fitness_history.empty()) 
+        {
+            x_min = 0.0;
+            x_max = 10.0;
+            y_min = -1.0;
+            y_max = 1.0;
+            x_center = 5.0;
+            x_range = 10.0;
             return;
         }
 
@@ -235,51 +236,29 @@ namespace genetic_gui
         double new_target_x_max = std::max(static_cast<double>(last_gen), 10.0);
         
         auto [min_it, max_it] = std::minmax_element(mean_fitness_history.begin(), mean_fitness_history.end());
-        double y_range = *max_it - *min_it;
+        double y_data_range = *max_it - *min_it;
         
-        if (y_range < 1e-10) {
-            y_range = 1.0;
-            *min_it = *max_it - 0.5;
+        if (y_data_range < 1e-10) {
+            y_data_range = 1.0;
         }
         
-        double new_target_y_min = *min_it - y_range * 0.2;
-        double new_target_y_max = *max_it + y_range * 0.2;
+        double new_target_y_min = *min_it - y_data_range * 0.1;
+        double new_target_y_max = *max_it + y_data_range * 0.1;
         
-        if (new_target_y_max - new_target_y_min < 0.1) 
+        const double expansion_speed = 0.1;
+        
+        if (new_target_x_max > x_max || x_max == 10.0) 
         {
-            new_target_y_min = -0.05;
-            new_target_y_max = 0.05;
+            x_max = x_max * (1.0 - expansion_speed) + new_target_x_max * expansion_speed;
         }
-
-        const double expansion_speed = 0.2;
-        x_max = x_max * (1.0 - expansion_speed) + new_target_x_max * expansion_speed;
+        
         y_min = y_min * (1.0 - expansion_speed) + new_target_y_min * expansion_speed;
         y_max = y_max * (1.0 - expansion_speed) + new_target_y_max * expansion_speed;
 
-        x_min = 0;
-        x_center = x_max / 2.0;
-        x_range = x_max * 1.05;
-
-        wxSize size = GetSize();
-        float aspect = float(size.x)/size.y;
-        float data_aspect = (x_max - x_min)/(y_max - y_min);
+        x_min = 0.0;
         
-        if(data_aspect > aspect) {
-            float new_height = (x_max - x_min)/aspect;
-            float y_center = (y_min + y_max)/2;
-            y_min = y_center - new_height/2;
-            y_max = y_center + new_height/2;
-        }
-        else 
-        {
-            float new_width = (y_max - y_min)*aspect;
-            float x_center = (x_min + x_max)/2;
-            x_min = x_center - new_width/2;
-            x_max = x_center + new_width/2;
-            x_range = x_max - x_min;
-        }
-
-        
+        x_center = (x_min + x_max) / 2.0;
+        x_range = (x_max - x_min);
     }
 
     void FitnessPlot::RenderData()
@@ -289,7 +268,8 @@ namespace genetic_gui
         glLineWidth(2.0f);
         glColor3f(0.0f, 0.5f, 0.0f);
         glBegin(GL_LINE_STRIP);
-        for (size_t i = 0; i < mean_fitness_history.size(); ++i) {
+        for (size_t i = 0; i < mean_fitness_history.size(); ++i) 
+        {
             glVertex2f(static_cast<float>(i), mean_fitness_history[i]);
         }
         glEnd();
@@ -297,39 +277,51 @@ namespace genetic_gui
         glPointSize(5.0f);
         glColor3f(1.0f, 0.0f, 0.0f);
         glBegin(GL_POINTS);
-        if (!mean_fitness_history.empty()) {
+        if (!mean_fitness_history.empty()) 
+        {
             size_t last = mean_fitness_history.size() - 1;
             glVertex2f(static_cast<float>(last), mean_fitness_history[last]);
         }
         glEnd();
     }
-
+   
     void FitnessPlot::RenderAxes()
     {
         glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-        glLineWidth(2.0f);
+        glLineWidth(3.0f);
         
-        float x_axis_y = y_min * 1.15;
+        float axis_offset_x = (x_max - x_min) * 0.02f;
+        float axis_offset_y = (y_max - y_min) * 0.05f;
+        
+        float axis_x_start = x_min + axis_offset_x;
+        float axis_x_end = x_max - axis_offset_x;
+        float axis_y_start = y_min + axis_offset_y;
+        float axis_y_end = y_max - axis_offset_y;
         
         glBegin(GL_LINES);
-        glVertex2f(x_min, x_axis_y);
-        glVertex2f(x_max, x_axis_y);
+        glVertex2f(axis_x_start, axis_y_start);
+        glVertex2f(axis_x_end, axis_y_start);
         
-        glVertex2f(0.0f, y_min);
-        glVertex2f(0.0f, y_max);
+        glVertex2f(axis_x_start, axis_y_start);
+        glVertex2f(axis_x_start, axis_y_end);
         glEnd();
         
-        float arrow_size_x = (x_max - x_min) * 0.01f;
-        float arrow_size_y = (y_max - y_min) * 0.02f;
+        double arrow_size_x = (x_max - x_min) * 0.03f;
+        double arrow_size_y = (y_max - y_min) * 0.05f;
+        
+        arrow_size_x = std::max(arrow_size_x, (x_max - x_min) * 0.02f);
+        arrow_size_y = std::max(arrow_size_y, (y_max - y_min) * 0.03f);
         
         glBegin(GL_TRIANGLES);
-        glVertex2f(x_max, x_axis_y);
-        glVertex2f(x_max - arrow_size_x, x_axis_y + arrow_size_y);
-        glVertex2f(x_max - arrow_size_x, x_axis_y - arrow_size_y);
         
-        glVertex2f(0.0f, y_max);
-        glVertex2f(-arrow_size_x, y_max - arrow_size_y);
-        glVertex2f(arrow_size_x, y_max - arrow_size_y);
+        glVertex2f(axis_x_end, axis_y_start);
+        glVertex2f(axis_x_end - arrow_size_x, axis_y_start + arrow_size_y * 0.5f);
+        glVertex2f(axis_x_end - arrow_size_x, axis_y_start - arrow_size_y * 0.5f);
+        
+        glVertex2f(axis_x_start, axis_y_end);
+        glVertex2f(axis_x_start - arrow_size_x * 0.5f, axis_y_end - arrow_size_y);
+        glVertex2f(axis_x_start + arrow_size_x * 0.5f, axis_y_end - arrow_size_y);
+        
         glEnd();
         
         glLineWidth(1.0f);

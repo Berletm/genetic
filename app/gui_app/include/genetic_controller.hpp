@@ -15,6 +15,8 @@ namespace genetic_gui
         double mean_fitness;
         double delta_fitness;
         int current_epoch;
+
+        bool is_running;
         
     public:
         inline void AddObserver(wxWindow* observer) {observers.push_back(observer);}
@@ -23,6 +25,8 @@ namespace genetic_gui
         GeneticController();
 
         void InitAlgo();
+
+        inline bool IsRunning() {return this->is_running;}
 
         bool MakeStep();
     };

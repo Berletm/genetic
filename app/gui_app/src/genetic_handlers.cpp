@@ -208,6 +208,11 @@ namespace genetic_gui
         this->Hide();
     }
 
+    void AlgoSettingsFrame::OnApply(wxCommandEvent &event)
+    {
+        
+    }
+
     void RendSettingsFrame::OnClose(wxCloseEvent& event)
     {
         this->Hide();
