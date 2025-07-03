@@ -1,10 +1,12 @@
 #include "genetic_frame.hpp"
 #include "file_frames.hpp"
 #include "settings_frames.hpp"
+#include "save_load.hpp"
 #include <evolution.hpp>
 #include <sstream>
 #include <format>
 #include <string>
+#include <fstream>
 
 namespace genetic_gui
 {
@@ -45,7 +47,27 @@ namespace genetic_gui
 
     void GeneticFrame::Save(wxCommandEvent& event)
     {
+        wxFileDialog save_file_dialog(
+            this,                       
+            _("Save current session."),        
+            "",                         
+            "",                         
+            "Json files (*.json)|*.json", 
+            wxFD_SAVE | wxFD_OVERWRITE_PROMPT
+        );
 
+        if (save_file_dialog.ShowModal() == wxID_CANCEL) return;
+
+        std::string filepath = save_file_dialog.GetPath().ToStdString();
+
+        json j;
+
+        j["mean_fitness_history"] = mean_fitness_history;
+        j["best_individ_history"] = best_individ_history;
+        j["controller"]           = controller;
+        j["algo_settings"]        = algo_settings;
+
+        std::ofstream(filepath) << j.dump(4);
     }
 
     void GeneticFrame::Load(wxCommandEvent& event)
@@ -424,9 +446,13 @@ namespace genetic_gui
         epsilon_ctrl->GetValue().ToDouble(&eps);
         algo_settings.epsilon = eps;
         
-        algo_settings.selection_strategy = selection_map[genetic::SelectionMethod(selectionComboBox->GetSelection())];
+        algo_settings.selection_id      = genetic::SelectionMethod(selectionComboBox->GetSelection());
+        algo_settings.recombination_id  = genetic::RecombinationMethod(recombinationComboBox->GetSelection());
+        algo_settings.mutation_id       = genetic::MutationMethod(mutationComboBox->GetSelection());
+
+        algo_settings.selection_strategy     = selection_map[genetic::SelectionMethod(selectionComboBox->GetSelection())];
         algo_settings.recombination_strategy = recombination_map[genetic::RecombinationMethod(recombinationComboBox->GetSelection())];
-        algo_settings.mutation_strategy = mutation_map[genetic::MutationMethod(mutationComboBox->GetSelection())];
+        algo_settings.mutation_strategy      = mutation_map[genetic::MutationMethod(mutationComboBox->GetSelection())];
 
         RefreshPlots();
 

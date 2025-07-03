@@ -1,6 +1,7 @@
 #include "settings_frames.hpp"
 #include "shared.hpp"
 #include <wx/valnum.h>
+#include <format>
 
 namespace genetic_gui
 {
@@ -18,13 +19,16 @@ namespace genetic_gui
         val.SetRange(1.0, 100.0);
 
         wxStaticText* delta_label = new wxStaticText(panel, wxID_ANY, "Delta:");
-        delta_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25), 0, val);
+
+        std::string default_delta = std::format("{:.1f}", algo_settings.delta);
+        delta_ctrl = new wxTextCtrl(panel, wxID_ANY, default_delta, wxDefaultPosition, wxSize(80, 25), 0, val);
         wxBoxSizer* delta_sizer = new wxBoxSizer(wxVERTICAL);
         delta_sizer->Add(delta_label, 0, wxALL | wxALIGN_LEFT, 2);
         delta_sizer->Add(delta_ctrl, 0, wxALL | wxALIGN_LEFT, 2);
         
+        std::string default_sigma = std::format("{:.1f}", algo_settings.sigma);
         wxStaticText* sigma_label = new wxStaticText(panel, wxID_ANY, "Sigma:");
-        sigma_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25), 0, val);
+        sigma_ctrl = new wxTextCtrl(panel, wxID_ANY, default_sigma, wxDefaultPosition, wxSize(80, 25), 0, val);
         wxBoxSizer* sigma_sizer = new wxBoxSizer(wxVERTICAL);
         sigma_sizer->Add(sigma_label, 0, wxALL | wxALIGN_LEFT, 2);
         sigma_sizer->Add(sigma_ctrl, 0, wxALL | wxALIGN_LEFT, 2);
@@ -34,9 +38,10 @@ namespace genetic_gui
         
         wxFloatingPointValidator<double> scaling_val(1);
         scaling_val.SetRange(1.0, 1000.0);
-
+        
+        std::string default_scaling = std::format("{:.1f}", algo_settings.max_after_scaling);
         wxStaticText* scalingLabel = new wxStaticText(panel, wxID_ANY, "Max Scaling:");
-        scaling_ctrl = new wxTextCtrl(panel, wxID_ANY, "100.0", wxDefaultPosition, wxSize(80, 25), 0, scaling_val);
+        scaling_ctrl = new wxTextCtrl(panel, wxID_ANY, default_scaling, wxDefaultPosition, wxSize(80, 25), 0, scaling_val);
         
         verbose_ctrl = new wxCheckBox(panel, wxID_ANY, "Verbose");
         verbose_ctrl->SetValue(true);
@@ -73,16 +78,15 @@ namespace genetic_gui
         multisampling_check = new wxCheckBox(panel, wxID_ANY, "Multisampling");
         multisampling_check->SetValue(true); 
         
-        
         wxStaticText* resolutionLabel = new wxStaticText(panel, wxID_ANY, "Resolution:");
         resolution_spin = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString, 
                                         wxDefaultPosition, wxDefaultSize,
-                                        wxSP_ARROW_KEYS, 10, 500, 50);
+                                        wxSP_ARROW_KEYS, 10, 500, render_settings.resolution);
         
         wxStaticText* fpsLabel = new wxStaticText(panel, wxID_ANY, "FPS:");
         fps_spin = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString,
                                 wxDefaultPosition, wxDefaultSize,
-                                wxSP_ARROW_KEYS, 15, 120, 30);
+                                wxSP_ARROW_KEYS, 15, 120, render_settings.fps);
         
         apply_btn = new wxButton(panel, wxID_OK, "Apply");
         

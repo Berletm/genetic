@@ -10,14 +10,13 @@ namespace genetic_gui
     class GeneticController
     {
     private:
-        std::vector<wxWindow*> observers;
-
+        std::vector<wxWindow*> observers;       
+    public:
         genetic::Generation current_generation;
         double mean_fitness;
         double delta_fitness;
 
-        bool is_running;        
-    public:
+        bool is_running;
         std::vector<HistoryState> undo_history;
         std::vector<HistoryState> redo_history;
         int current_epoch;
