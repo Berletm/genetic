@@ -27,7 +27,6 @@ namespace genetic_gui
     {
     private:
         void OnClose(wxCloseEvent &event);
-        void RefreshPlots();
         void OnApply(wxCommandEvent &event);
     private:
         wxCheckBox *show_legend_check;

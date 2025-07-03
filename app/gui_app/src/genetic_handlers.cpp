@@ -51,28 +51,108 @@ namespace genetic_gui
             this,                       
             _("Save current session."),        
             "",                         
-            "",                         
+            "session.json",                         
             "Json files (*.json)|*.json", 
             wxFD_SAVE | wxFD_OVERWRITE_PROMPT
         );
 
-        if (save_file_dialog.ShowModal() == wxID_CANCEL) return;
+        int res = save_file_dialog.ShowModal();
 
-        std::string filepath = save_file_dialog.GetPath().ToStdString();
+        if (res == wxID_CANCEL) return;
 
-        json j;
+        if (res == wxID_OK)
+        {
+            std::string filepath = save_file_dialog.GetPath().ToStdString();
 
-        j["mean_fitness_history"] = mean_fitness_history;
-        j["best_individ_history"] = best_individ_history;
-        j["controller"]           = controller;
-        j["algo_settings"]        = algo_settings;
+            if (!filepath.ends_with(".json")) 
+            {
+                filepath += ".json";
+            }
 
-        std::ofstream(filepath) << j.dump(4);
+            json j;
+
+            j["poly"]            = poly;
+            j["best_individ"]    = step;
+            j["controller"]      = controller;
+            j["algo_settings"]   = algo_settings;
+            j["render_settings"] = render_settings;
+
+            std::ofstream(filepath) << j.dump(4);
+        }
     }
 
     void GeneticFrame::Load(wxCommandEvent& event)
     {
+        wxFileDialog load_file_dialog(
+            this,                       
+            _("Load saved session."),        
+            "",                         
+            "",                         
+            "Json files (*.json)|*.json", 
+            wxFD_OPEN | wxFD_FILE_MUST_EXIST
+        );
 
+        int res = load_file_dialog.ShowModal();
+
+        if (res == wxID_CANCEL) return;
+        
+        if (res == wxID_OK)
+        {
+            std::string filepath = load_file_dialog.GetPath().ToStdString();
+
+            std::ifstream in(filepath);
+
+            if (!in.is_open()) 
+            {
+                statusbar->SetStatusText("Failed to load file.");
+                return;
+            }
+
+            json j;
+            in >> j;
+
+            poly            = j.at("poly").get<genetic::Polynomial>();
+            step            = j.at("best_individ").get<genetic::Individ>();
+            controller      = j.at("controller").get<genetic_gui::GeneticController>();
+            algo_settings   = j.at("algo_settings").get<genetic_gui::AlgoSettings>();
+            render_settings = j.at("render_settings").get<genetic_gui::RenderingSettings>();
+
+            best_individ_history.clear();
+            mean_fitness_history.clear();
+
+            best_individ_history.push_back(step);
+            mean_fitness_history.push_back(step.fitness);
+
+            statusbar->SetStatusText("Successfully loaded session!");
+            
+            wxMessageDialog dialog(this, 
+                "Do you want to continue algorithm?", 
+                "Choose option", 
+                wxYES_NO | wxICON_QUESTION);
+
+            dialog.SetYesNoLabels("Continue", "No, just show me result");
+            
+            int result = dialog.ShowModal();
+
+            if (result == wxID_YES)
+            {
+                frames.loadFrame->Show();
+                frames.loadFrame->SetFocus();
+
+                RefreshPlots();
+                controller.is_running = true;
+                timer.Stop();
+
+                return;
+            }
+            else if (result == wxID_NO)
+            {
+                RefreshPlots();
+                controller.is_running = true;
+                timer.Stop();
+                return;
+            }
+        }
     }
 
     void GeneticFrame::RendSettings(wxCommandEvent& event)
@@ -177,6 +257,28 @@ namespace genetic_gui
         }
     }
 
+    void GeneticFrame::RefreshPlots()
+    {
+        frames.mainFrame->timer.Stop();
+
+        frames.mainFrame->fitnessplot->Destroy();
+        frames.mainFrame->fitnessplot = new FitnessPlot(frames.mainFrame->fitnessplot_panel, &frames.mainFrame->controller);
+        frames.mainFrame->fitnessplot_sizer->Add(frames.mainFrame->fitnessplot, 1, wxALL|wxEXPAND, 2);
+        frames.mainFrame->fitnessplot_panel->Layout();
+
+        frames.mainFrame->algoplot->Destroy();
+        frames.mainFrame->algoplot = new AlgoPlot(frames.mainFrame->alogplot_panel, &frames.mainFrame->controller);
+        frames.mainFrame->algoplot_sizer->Add(frames.mainFrame->algoplot, 1,  wxALL|wxEXPAND, 2);
+        frames.mainFrame->alogplot_panel->Layout();
+
+        frames.mainFrame->controller.ClearObservers();
+
+        frames.mainFrame->controller.AddObserver(frames.mainFrame->algoplot);
+        frames.mainFrame->controller.AddObserver(frames.mainFrame->fitnessplot);
+
+        frames.mainFrame->timer.Start(1000 / render_settings.fps);
+    }
+
     void NewFrame::OnNumberInput(wxCommandEvent& event) 
     {
         wxTextCtrl* ctrl = dynamic_cast<wxTextCtrl*>(event.GetEventObject());
@@ -234,7 +336,7 @@ namespace genetic_gui
             
             if (!in_exponent && (cleaned[i] == '+' || cleaned[i] == '-') && i > 0) 
             {
-                terms.push_back(cleaned.substr(start, i - start));
+                terms.emplace_back(cleaned, start, i - start);;
                 start = i;
             }
         }
@@ -274,11 +376,11 @@ namespace genetic_gui
         if (work_term[0] == '-') 
         {
             negative = true;
-            work_term = work_term.substr(1);
+            work_term = std::string(work_term.begin() + 1, work_term.end());;
         } 
         else if (work_term[0] == '+') 
         {
-            work_term = work_term.substr(1);
+            work_term = std::string(work_term.begin() + 1, work_term.end());;
         }
         
         if (work_term.empty()) {
@@ -375,28 +477,6 @@ namespace genetic_gui
         }
     }
 
-    void NewFrame::RefreshPlots()
-    {
-        frames.mainFrame->timer.Stop();
-
-        frames.mainFrame->fitnessplot->Destroy();
-        frames.mainFrame->fitnessplot = new FitnessPlot(frames.mainFrame->fitnessplot_panel, &frames.mainFrame->controller);
-        frames.mainFrame->fitnessplot_sizer->Add(frames.mainFrame->fitnessplot, 1, wxALL|wxEXPAND, 2);
-        frames.mainFrame->fitnessplot_panel->Layout();
-
-        frames.mainFrame->algoplot->Destroy();
-        frames.mainFrame->algoplot = new AlgoPlot(frames.mainFrame->alogplot_panel, &frames.mainFrame->controller);
-        frames.mainFrame->algoplot_sizer->Add(frames.mainFrame->algoplot, 1,  wxALL|wxEXPAND, 2);
-        frames.mainFrame->alogplot_panel->Layout();
-
-        frames.mainFrame->controller.ClearObservers();
-
-        frames.mainFrame->controller.AddObserver(frames.mainFrame->algoplot);
-        frames.mainFrame->controller.AddObserver(frames.mainFrame->fitnessplot);
-
-        frames.mainFrame->timer.Start(1000 / render_settings.fps);
-    }
-
     void NewFrame::OnCompute(wxCommandEvent& event)
     {
         auto poly_temp = poly_ctrl->GetValue().ToStdString();
@@ -454,20 +534,19 @@ namespace genetic_gui
         algo_settings.recombination_strategy = recombination_map[genetic::RecombinationMethod(recombinationComboBox->GetSelection())];
         algo_settings.mutation_strategy      = mutation_map[genetic::MutationMethod(mutationComboBox->GetSelection())];
 
-        RefreshPlots();
+        frames.mainFrame->RefreshPlots();
 
-        geneticframe->StartAlgo();
+        frames.mainFrame->StartAlgo();
 
         this->Hide();
     }
-
 
     void AlgoSettingsFrame::OnClose(wxCloseEvent& event)
     {
         this->Hide();
     }
 
-    void AlgoSettingsFrame::OnApply(wxCommandEvent &event)
+    void AlgoSettingsFrame::OnApply(wxCommandEvent& event)
     {
         algo_settings.verbose = verbose_ctrl->GetValue();
 
@@ -507,29 +586,7 @@ namespace genetic_gui
         this->Hide();
     }
 
-    void RendSettingsFrame::RefreshPlots()
-    {
-        frames.mainFrame->timer.Stop();
-
-        frames.mainFrame->fitnessplot->Destroy();
-        frames.mainFrame->fitnessplot = new FitnessPlot(frames.mainFrame->fitnessplot_panel, &frames.mainFrame->controller);
-        frames.mainFrame->fitnessplot_sizer->Add(frames.mainFrame->fitnessplot, 1, wxALL|wxEXPAND, 2);
-        frames.mainFrame->fitnessplot_panel->Layout();
-
-        frames.mainFrame->algoplot->Destroy();
-        frames.mainFrame->algoplot = new AlgoPlot(frames.mainFrame->alogplot_panel, &frames.mainFrame->controller);
-        frames.mainFrame->algoplot_sizer->Add(frames.mainFrame->algoplot, 1,  wxALL|wxEXPAND, 2);
-        frames.mainFrame->alogplot_panel->Layout();
-
-        frames.mainFrame->controller.ClearObservers();
-
-        frames.mainFrame->controller.AddObserver(frames.mainFrame->algoplot);
-        frames.mainFrame->controller.AddObserver(frames.mainFrame->fitnessplot);
-
-        frames.mainFrame->timer.Start(1000 / render_settings.fps);
-    }
-
-    void RendSettingsFrame::OnApply(wxCommandEvent &event)
+    void RendSettingsFrame::OnApply(wxCommandEvent& event)
     {
         int fps = fps_spin->GetValue();
         render_settings.fps = fps;
@@ -550,7 +607,7 @@ namespace genetic_gui
 
         render_settings.show_legend = show_legend_check->IsChecked();
 
-        RefreshPlots();
+        frames.mainFrame->RefreshPlots();
 
         frames.mainFrame->algoplot->ApplyRenderSettings();
         frames.mainFrame->fitnessplot->ApplyRenderSettings();
@@ -566,4 +623,61 @@ namespace genetic_gui
 
         this->Hide();
     }
+
+    void LoadFrame::OnClose(wxCloseEvent& event)
+    {
+        this->Hide();
+    }
+
+    void LoadFrame::OnNumberInput(wxCommandEvent& event)
+    {
+        wxTextCtrl* ctrl = dynamic_cast<wxTextCtrl*>(event.GetEventObject());
+        if (ctrl) 
+        {
+            double value;
+            if (!ctrl->GetValue().ToDouble(&value) || value <= 0) 
+            {
+                ctrl->SetBackgroundColour(wxColour(255, 200, 200));
+            } 
+            else 
+            {
+                ctrl->SetBackgroundColour(wxNullColour);
+            }
+            ctrl->Refresh();
+        }
+    }
+
+    void LoadFrame::OnCompute(wxCommandEvent& event)
+    {
+        int epochs;
+        epoch_ctrl->GetValue().ToInt(&epochs);
+        algo_settings.n_epoch = epochs;
+        
+        double recombination_prob;
+        recomb_p_ctrl->GetValue().ToDouble(&recombination_prob);
+        algo_settings.recombination_p = recombination_prob;
+        
+        double mutation_prob;
+        mutation_p_ctrl->GetValue().ToDouble(&mutation_prob);
+        algo_settings.mutation_p = mutation_prob;
+        
+        double eps;
+        epsilon_ctrl->GetValue().ToDouble(&eps);
+        algo_settings.epsilon = eps;
+        
+        algo_settings.selection_id      = genetic::SelectionMethod(selectionComboBox->GetSelection());
+        algo_settings.recombination_id  = genetic::RecombinationMethod(recombinationComboBox->GetSelection());
+        algo_settings.mutation_id       = genetic::MutationMethod(mutationComboBox->GetSelection());
+
+        algo_settings.selection_strategy     = selection_map[genetic::SelectionMethod(selectionComboBox->GetSelection())];
+        algo_settings.recombination_strategy = recombination_map[genetic::RecombinationMethod(recombinationComboBox->GetSelection())];
+        algo_settings.mutation_strategy      = mutation_map[genetic::MutationMethod(mutationComboBox->GetSelection())];
+
+        frames.mainFrame->RefreshPlots();
+
+        frames.mainFrame->ContinueAlgo();
+
+        this->Hide();
+    }
+
 }

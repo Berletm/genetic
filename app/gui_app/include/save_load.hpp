@@ -24,8 +24,7 @@ namespace nlohmann
 
         static void from_json(const json& j, genetic::Gene& gene) 
         {
-            auto interval = j.at("interval").get<std::pair<double, double>>();
-            gene.interval = interval;
+            gene.interval = j.at("interval").get<std::pair<double, double>>();
             gene.height = j.at("height").get<double>();
         }
     };
@@ -45,7 +44,8 @@ namespace nlohmann
 
         static void from_json(const json& j, genetic::Individ& individ)
         {
-            static_cast<std::vector<genetic::Gene>&>(individ) = j.at("genes").get<std::vector<genetic::Gene>>();
+            auto& genes = static_cast<std::vector<genetic::Gene>&>(individ);
+            genes = j.at("genes").get<std::vector<genetic::Gene>>();
             individ.fitness = j.at("fitness").get<double>();
         }
     };
@@ -66,31 +66,10 @@ namespace nlohmann
 
         static void from_json(const json& j, genetic::Generation& generation)
         {
-            static_cast<std::vector<genetic::Individ>&>(generation) = j.at("generation").get<std::vector<genetic::Individ>>();
+            auto& individs = static_cast<std::vector<genetic::Individ>&>(generation);
+            individs = j.at("generation").get<std::vector<genetic::Individ>>();
             generation.is_scaled = j.at("is_scaled").get<bool>();
             generation.proba = j.at("proba").get<std::vector<double>>();
-        }
-    };
-
-    // HistoryState
-    template<>
-    struct adl_serializer<genetic_gui::HistoryState>
-    {
-        static void to_json(json& j, const genetic_gui::HistoryState& hs)
-        {
-            j = json
-            {
-                {"generation", hs.generation},
-                {"fitness", hs.fitness},
-                {"best_individ", hs.best_individ}
-            };
-        }
-        
-        static void from_json(const json& j, genetic_gui::HistoryState& hs)
-        {
-            j.at("generation").get_to(hs.generation);
-            j.at("best_individ").get_to(hs.best_individ);
-            j.at("fitness").get_to(hs.fitness);
         }
     };
 
@@ -121,20 +100,54 @@ namespace nlohmann
 
         static void from_json(const json& j, genetic_gui::AlgoSettings& algo_settings_)
         {
-            j.at("interval").get_to(algo_settings_.interval);
-            j.at("n_epoch").get_to(algo_settings_.n_epoch);
-            j.at("generation_size").get_to(algo_settings_.generation_size);
-            j.at("chromosome_size").get_to(algo_settings_.chromosome_size);
-            j.at("mutation_p").get_to(algo_settings_.mutation_p);
-            j.at("recombination_p").get_to(algo_settings_.recombination_p);
-            j.at("epsilon").get_to(algo_settings_.epsilon);
-            j.at("selection_id").get_to(algo_settings_.selection_id);
-            j.at("recombination_id").get_to(algo_settings_.recombination_id);
-            j.at("mutation_id").get_to(algo_settings_.mutation_id);
-            j.at("verbose").get_to(algo_settings_.verbose);
-            j.at("max_after_scaling").get_to(algo_settings_.max_after_scaling);
-            j.at("delta").get_to(algo_settings_.delta);
-            j.at("sigma").get_to(algo_settings_.sigma);
+            algo_settings_.interval = j.at("interval").get<std::pair<double, double>>();
+            algo_settings_.n_epoch = j.at("n_epoch").get<int>();
+            algo_settings_.generation_size = j.at("generation_size").get<int>();
+            algo_settings_.chromosome_size = j.at("chromosome_size").get<int>();
+            algo_settings_.mutation_p = j.at("mutation_p").get<double>();
+            algo_settings_.recombination_p = j.at("recombination_p").get<double>();
+            algo_settings_.epsilon = j.at("epsilon").get<double>();
+            
+            algo_settings_.selection_id = j.at("selection_id").get<genetic::SelectionMethod>();
+            algo_settings_.recombination_id = j.at("recombination_id").get<genetic::RecombinationMethod>();
+            algo_settings_.mutation_id = j.at("mutation_id").get<genetic::MutationMethod>();
+
+            algo_settings_.selection_strategy     = genetic_gui::selection_map[algo_settings_.selection_id];
+            algo_settings_.recombination_strategy = genetic_gui::recombination_map[algo_settings_.recombination_id];
+            algo_settings_.mutation_strategy      = genetic_gui::mutation_map[algo_settings_.mutation_id];
+
+            algo_settings_.verbose = j.at("verbose").get<bool>();
+            algo_settings_.max_after_scaling = j.at("max_after_scaling").get<double>();
+            algo_settings_.delta = j.at("delta").get<double>();
+            algo_settings_.sigma = j.at("sigma").get<double>();
+        }
+    };
+
+    // RenderingSettings
+    template<>
+    struct adl_serializer<genetic_gui::RenderingSettings>
+    {
+         static void to_json(json& j, const genetic_gui::RenderingSettings& rend_settings_)
+        {
+            j = json
+            {
+                {"x_max", rend_settings_.x_max},
+                {"x_min", rend_settings_.x_min},
+                {"y_max", rend_settings_.y_max},
+                {"y_min", rend_settings_.y_min},
+                {"show_legend", rend_settings_.show_legend},
+                {"resolution", rend_settings_.resolution},
+            };
+        }
+
+        static void from_json(const json& j, genetic_gui::RenderingSettings& rend_settings_)
+        {
+            rend_settings_.x_max = j.at("x_max").get<double>();
+            rend_settings_.x_min = j.at("x_min").get<double>();
+            rend_settings_.y_max = j.at("y_max").get<double>();
+            rend_settings_.y_min = j.at("y_min").get<double>();
+            rend_settings_.show_legend = j.at("show_legend").get<bool>();
+            rend_settings_.resolution  = j.at("resolution").get<int>();
         }
     };
 
@@ -148,24 +161,55 @@ namespace nlohmann
             j = json
             {
                 {"current_generation", controller.current_generation},
-                {"mean_fitness", controller.mean_fitness},
-                {"delta_fitness", controller.delta_fitness},
-                {"is_running", controller.is_running},
-                {"undo_history", controller.undo_history},
-                {"redo_history", controller.redo_history},
-                {"current_epoch", controller.current_epoch}
+                {"current_epoch", controller.current_epoch},
+                {"mean_fitness", controller.mean_fitness}
             };
         }
 
         static void from_json(const json& j, genetic_gui::GeneticController& controller)
         {
-            j.at("current_generation").get_to(controller.current_generation);
-            j.at("mean_fitness").get_to(controller.mean_fitness);
-            j.at("delta_fitness").get_to(controller.delta_fitness);
-            j.at("is_running").get_to(controller.is_running);
-            j.at("undo_history").get_to(controller.undo_history);
-            j.at("redo_history").get_to(controller.redo_history);
-            j.at("current_epoch").get_to(controller.current_epoch);
+            controller.current_generation = j.at("current_generation").get<genetic::Generation>();
+            controller.mean_fitness = j.at("mean_fitness").get<double>();
+            controller.current_epoch = 0;
+        }
+    };
+
+    // Monomial
+    template<>
+    struct adl_serializer<genetic::Monomial>
+    {
+        static void to_json(json& j, const genetic::Monomial& mono)
+        {
+            j = json
+            {
+                {"coefficient", mono.coefficient},
+                {"power", mono.power}
+            };
+        }
+
+        static void from_json(const json& j, genetic::Monomial& mono)
+        {
+            mono.coefficient = j.at("coefficient").get<double>();
+            mono.power = j.at("power").get<double>();
+        }
+    };
+
+    // Polynomial
+    template<>
+    struct adl_serializer<genetic::Polynomial>
+    {
+        static void to_json(json& j, const genetic::Polynomial& poly)
+        {
+            j = json
+            {
+                {"monomials", static_cast<const std::vector<genetic::Monomial>>(poly)}
+            };
+        }
+
+        static void from_json(const json& j, genetic::Polynomial& poly)
+        {
+            auto& monomials = static_cast<std::vector<genetic::Monomial>&>(poly);
+            monomials = j.at("monomials").get<std::vector<genetic::Monomial>>();
         }
     };
 }

@@ -118,7 +118,7 @@ namespace genetic_gui
     }
 
     GeneticFrame::GeneticFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style):  wxFrame(parent, id, title, pos, size, style)
-    {        
+    {
         const wxColour textColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
 
         statusbar = this->CreateStatusBar(1, wxSTB_SIZEGRIP, wxID_ANY);
@@ -239,10 +239,22 @@ namespace genetic_gui
 
     void GeneticFrame::StartAlgo()
     {
+        controller.ClearObservers();
+
         controller.InitAlgo();
         controller.AddObserver(algoplot);
         controller.AddObserver(fitnessplot);
 
+        timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
+        timer.Start(1000 / render_settings.fps);
+    }
+
+    void GeneticFrame::ContinueAlgo()
+    {
+        controller.ClearObservers();
+        controller.AddObserver(algoplot);
+        controller.AddObserver(fitnessplot);
+        
         timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
         timer.Start(1000 / render_settings.fps);
     }

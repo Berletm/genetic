@@ -90,6 +90,7 @@ namespace genetic_gui
     {
         GeneticFrame      *mainFrame;
         NewFrame          *newFrame;
+        LoadFrame         *loadFrame;
         AlgoSettingsFrame *algoFrame;
         RendSettingsFrame *rendFrame;
     };
