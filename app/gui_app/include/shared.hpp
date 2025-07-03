@@ -72,6 +72,10 @@ namespace genetic_gui
         
         double mutation_p = 0.1, recombination_p = 0.7, epsilon = EPSILON;
 
+        genetic::SelectionMethod     selection_id;
+        genetic::RecombinationMethod recombination_id;
+        genetic::MutationMethod      mutation_id;
+
         std::function<genetic::Individ(genetic::Generation&)> selection_strategy;
         std::function<genetic::Individs(genetic::Individ, genetic::Individ)> recombination_strategy;
         std::function<genetic::Individ(genetic::Individ)> mutation_strategy;
@@ -86,6 +90,7 @@ namespace genetic_gui
     {
         GeneticFrame      *mainFrame;
         NewFrame          *newFrame;
+        LoadFrame         *loadFrame;
         AlgoSettingsFrame *algoFrame;
         RendSettingsFrame *rendFrame;
     };

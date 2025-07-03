@@ -15,7 +15,6 @@ namespace genetic_gui
     {
     private:
         // event handlers
-        void RefreshPlots();
         void OnCompute(wxCommandEvent& event);
         void OnNumberInput(wxCommandEvent& event);
         void OnClose(wxCloseEvent& event);
@@ -24,7 +23,7 @@ namespace genetic_gui
         double ParseCoefficient(const std::string& coeff_str);
         genetic::Polynomial ParsePoly(const std::string& poly_str);
     public:
-        NewFrame(GeneticFrame* frame, wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
+        NewFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
     private:
         GeneticFrame *geneticframe;
 
@@ -47,7 +46,23 @@ namespace genetic_gui
         wxComboBox *mutationComboBox;
     };
         
-
+    class LoadFrame : public wxFrame
+    {
+    public:
+        LoadFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
+    private:
+        void OnCompute(wxCommandEvent& event);
+        void OnClose(wxCloseEvent& event); 
+        void OnNumberInput(wxCommandEvent& event);   
+    private:
+        wxComboBox *selectionComboBox;
+        wxComboBox *recombinationComboBox;
+        wxComboBox *mutationComboBox;
+        wxTextCtrl *epoch_ctrl;
+        wxTextCtrl *recomb_p_ctrl;
+        wxTextCtrl *mutation_p_ctrl;
+        wxTextCtrl *epsilon_ctrl;
+    };
 }
 
 #endif // FILE_FRAMES_HPP

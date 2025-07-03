@@ -16,7 +16,9 @@ namespace genetic_gui
     public:
         GeneticFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
 
+        void RefreshPlots();
         void StartAlgo();
+        void ContinueAlgo();
     protected:
         // event handlers
         void OnClose(wxCloseEvent& event);

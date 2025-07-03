@@ -346,12 +346,12 @@ namespace genetic_gui
         }
         glEnd();
         
-        if (!best_individ_history.empty()) 
+        if (!best_individ_history.empty() || !step.empty()) 
         {
             glColor3f(0.0f, 0.0f, 1.0f);
             glBegin(GL_LINE_STRIP);
 
-            for (const auto& interval: best_individ_history.back())
+            for (const auto& interval: step)
             {
                 glVertex2f(interval.interval.first, interval.height);
                 glVertex2f(interval.interval.second, interval.height);
