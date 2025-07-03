@@ -143,8 +143,16 @@ namespace genetic_gui
 
     void GeneticFrame::Stop(wxCommandEvent& event)
     {
-        if (!timer.IsRunning()) timer.Start(1000 / render_settings.fps);
-        else timer.Stop();
+        if (controller.IsRunning())
+        {
+            if (!timer.IsRunning()) timer.Start(1000 / render_settings.fps);
+            else timer.Stop();
+        }
+        else
+        {
+            std::string str = std::format("Error. Algorithm is not in progress.");
+            statusbar->SetStatusText(str);
+        }
     }
 
     void NewFrame::OnNumberInput(wxCommandEvent& event) 

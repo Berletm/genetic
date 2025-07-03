@@ -8,9 +8,23 @@
 #include "shared.hpp"
 #include <evolution.hpp>
 #include <generator.hpp>
+#include <sstream>
+#include <iomanip>
 
 namespace genetic_gui
 {
+    double GetNiceStep(double range)
+    {
+        double rough_step = range / 10.0;
+        double exponent = std::floor(std::log10(rough_step));
+        double factor = rough_step / std::pow(10, exponent);
+
+        if (factor < 1.9) return 1.0 * std::pow(10, exponent);
+        else if (factor < 4.5) return 2.0 * std::pow(10, exponent);
+        else if (factor < 9.0) return 5.0 * std::pow(10, exponent);
+        else return 10.0 * std::pow(10, exponent);
+    }
+
     // Plot
     Plot::Plot(wxWindow *parent, GeneticController *ctr)
     : wxGLCanvas(
@@ -30,6 +44,30 @@ namespace genetic_gui
         else glDisable(GL_MULTISAMPLE);
 
         this->Refresh();
+    }
+
+    void Plot::RenderText(const std::string& text, float x, float y, bool center_x, bool center_y) 
+    {
+        float text_width = 0;
+        float text_height = 18;
+        
+        for (char c : text) {
+            text_width += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, c);
+        }
+        
+        float scale_x = (x_max - x_min) / GetSize().x;
+        float scale_y = (y_max - y_min) / GetSize().y;
+        
+        text_width *= scale_x;
+        text_height *= scale_y;
+        
+        if (center_x) x -= text_width / 2;
+        if (center_y) y -= text_height / 2;
+        
+        glRasterPos2f(x, y);
+        for (char c : text) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
+        }
     }
 
     void Plot::RenderGrid()
@@ -87,11 +125,19 @@ namespace genetic_gui
         glLineWidth(2.0f);
         glBegin(GL_LINES);
 
-        glVertex2f(x_min, 0.0f);
-        glVertex2f(x_max, 0.0f);
+        float axis_y_pos = 0.0f;
+        if (0.0f < y_min) axis_y_pos = y_min;
+        else if (0.0f > y_max) axis_y_pos = y_max;
+        
+        glVertex2f(x_min, axis_y_pos);
+        glVertex2f(x_max, axis_y_pos);
 
-        glVertex2f(0.0f, y_min);
-        glVertex2f(0.0f, y_max);
+        float axis_x_pos = 0.0f;
+        if (0.0f < x_min) axis_x_pos = x_min;
+        else if (0.0f > x_max) axis_x_pos = x_max;
+
+        glVertex2f(axis_x_pos, y_min);
+        glVertex2f(axis_x_pos, y_max);
 
         glEnd();
         glLineWidth(1.0f);
@@ -101,19 +147,47 @@ namespace genetic_gui
 
         glBegin(GL_TRIANGLES);
 
-        float y_axis = 0.0f;
-        float x_arrow = x_max;
-        glVertex2f(x_arrow, y_axis);
-        glVertex2f(x_arrow - arrow_size_x, y_axis + arrow_size_y / 2);
-        glVertex2f(x_arrow - arrow_size_x, y_axis - arrow_size_y / 2);
+        glVertex2f(x_max, axis_y_pos);
+        glVertex2f(x_max - arrow_size_x, axis_y_pos + arrow_size_y / 2);
+        glVertex2f(x_max - arrow_size_x, axis_y_pos - arrow_size_y / 2);
 
-        float x_axis = 0.0f;
-        float y_arrow = y_max;
-        glVertex2f(x_axis, y_arrow);
-        glVertex2f(x_axis - arrow_size_x / 2, y_arrow - arrow_size_y);
-        glVertex2f(x_axis + arrow_size_x / 2, y_arrow - arrow_size_y);
+        glVertex2f(axis_x_pos, y_max);
+        glVertex2f(axis_x_pos - arrow_size_x / 2, y_max - arrow_size_y);
+        glVertex2f(axis_x_pos + arrow_size_x / 2, y_max - arrow_size_y);
 
         glEnd();
+
+        glColor3f(0.0f, 0.0f, 0.0f);
+
+        double step_x = GetNiceStep(x_max - x_min);
+        int precision_x = 0;
+        if (step_x < 1.0) {
+            precision_x = std::ceil(-std::log10(step_x));
+        }
+
+        for (double x = std::ceil(x_min / step_x) * step_x; x <= x_max; x += step_x)
+        {
+            if (std::abs(x) < 1e-6) continue;
+
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(precision_x) << x;
+            RenderText(ss.str(), x, axis_y_pos - arrow_size_y * 1.5f, true, true); // Center X, bottom Y
+        }
+
+        double step_y = GetNiceStep(y_max - y_min);
+        int precision_y = 0;
+        if (step_y < 1.0) {
+            precision_y = std::ceil(-std::log10(step_y));
+        }
+
+        for (double y = std::ceil(y_min / step_y) * step_y; y <= y_max; y += step_y)
+        {
+            if (std::abs(y) < 1e-6) continue; 
+
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(precision_y) << y;
+            RenderText(ss.str(), axis_x_pos - arrow_size_x * 2.0f, y, true, false); // Right-align X, center Y
+        }
     }
 
     void Plot::PrepareForRendering() 
@@ -401,7 +475,42 @@ namespace genetic_gui
         
         glEnd();
         
-        glLineWidth(1.0f);
+        glColor3f(0.0f, 0.0f, 0.0f);
+
+        double step_x = GetNiceStep(x_max - x_min);
+        int precision_x = 0;
+
+        for (double x = std::ceil(axis_x_start / step_x) * step_x; x <= axis_x_end; x += step_x)
+        {
+            if (std::abs(x - axis_x_start) < 1e-6) continue;
+
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(precision_x) << x;
+            RenderText(ss.str(), x, axis_y_start + arrow_size_y * 0.8f, true, true); 
+        }
+
+        double step_y = GetNiceStep(y_max - y_min);
+        int precision_y = 0;
+        if (step_y < 1.0) {
+            precision_y = std::ceil(-std::log10(step_y));
+        } else if (step_y > 1.0 && std::fmod(step_y, 1.0) != 0.0) {
+            precision_y = 1;
+        }
+
+        double start_y_label = std::ceil(axis_y_start / step_y) * step_y;
+        if (std::abs(start_y_label - axis_y_start) < 1e-6) 
+        { 
+            start_y_label += step_y;
+        }
+
+
+        for (double y = start_y_label; y <= axis_y_end; y += step_y)
+        {
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(precision_y) << y;
+
+            RenderText(ss.str(), axis_x_start + arrow_size_x * 3.0f, y, true, false); 
+        }
     }
 
 }

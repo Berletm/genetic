@@ -22,6 +22,8 @@ protected:
     double x_center = (x_min + x_max) / 2.0;
     double x_range = (x_max - x_min) * x_scale_factor;
 
+    void RenderText(const std::string& text, float x, float y, bool center_x, bool center_y);
+
     virtual void PrepareForRendering();
     virtual void RenderGrid();
     virtual void RenderAxes();
@@ -62,8 +64,7 @@ protected:
 
     void PrepareForRendering() override;
     void RenderData() override;
-    void RenderAxes() override;
-    
+    void RenderAxes() override;    
 public:
     FitnessPlot(wxWindow *parent, GeneticController* ctr);
 };
