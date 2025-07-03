@@ -9,6 +9,7 @@ find_package(wxWidgets REQUIRED COMPONENTS core gl base)
 include(${wxWidgets_USE_FILE})
 
 find_package(OpenGL REQUIRED)
+find_package(GLUT REQUIRED)
 
 add_subdirectory(genetic_algo)
 add_subdirectory(app)

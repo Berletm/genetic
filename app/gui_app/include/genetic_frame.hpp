@@ -27,13 +27,18 @@ namespace genetic_gui
         void AlgoSettings(wxCommandEvent& event);
         void Prev(wxCommandEvent& event);
         void Next(wxCommandEvent& event);
+        void Stop(wxCommandEvent& event);
     private:
         wxStatusBar *statusbar;
         wxMenuBar   *menubar;
         wxMenu      *file;
         wxMenu      *settings;
 
+        void OnTimer(wxTimerEvent&);
+    public:
         GeneticController controller;
+
+        wxBoxSizer  *main_sizer;
 
         wxBoxSizer  *algoplot_sizer;
         wxPanel     *alogplot_panel;
@@ -44,8 +49,6 @@ namespace genetic_gui
         Plot        *fitnessplot;
 
         wxTimer timer;
-
-        void OnTimer(wxTimerEvent&);
     };
 }
 

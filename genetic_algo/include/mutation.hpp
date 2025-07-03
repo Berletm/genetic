@@ -4,9 +4,14 @@
 #include "utils.hpp"
 #include <functional>
 
+#define DELTA 1.0
+#define SIGMA 1.0
+
 namespace genetic
 {
-    Generation mutation(double mutation_proba, Generation& current_generation, std::function<Individ(Individ)> mutation_strategy);
+    void       set_distribution(double delta, double sigma);
+
+    Generation mutation(double mutation_proba, Generation& current_generation, std::function<Individ(Individ)> mutation_strategy, double delta = DELTA, double sigma = SIGMA);
 
     Individ    swap_mutation(Individ individ);
 

@@ -1,48 +1,66 @@
 #include "settings_frames.hpp"
-
+#include "shared.hpp"
+#include <wx/valnum.h>
 
 namespace genetic_gui
 {
     AlgoSettingsFrame::AlgoSettingsFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style): 
     wxFrame(parent, id, title, pos, size, style)
-    {
-       this->Bind(wxEVT_CLOSE_WINDOW, &AlgoSettingsFrame::OnClose, this);
+    {        
+        wxPanel* panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
         
-        wxPanel* panel = new wxPanel(this);
+        wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
+        main_sizer->AddSpacer(10);
         
-        wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+        wxBoxSizer* delta_sigma_sizer = new wxBoxSizer(wxHORIZONTAL);
+            
+        wxFloatingPointValidator<double> val(1);
+        val.SetRange(1.0, 100.0);
+
+        wxStaticText* delta_label = new wxStaticText(panel, wxID_ANY, "Delta:");
+        delta_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25), 0, val);
+        wxBoxSizer* delta_sizer = new wxBoxSizer(wxVERTICAL);
+        delta_sizer->Add(delta_label, 0, wxALL | wxALIGN_LEFT, 2);
+        delta_sizer->Add(delta_ctrl, 0, wxALL | wxALIGN_LEFT, 2);
         
-        wxBoxSizer* deltaSignmaSizer = new wxBoxSizer(wxHORIZONTAL);
+        wxStaticText* sigma_label = new wxStaticText(panel, wxID_ANY, "Sigma:");
+        sigma_ctrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(80, 25), 0, val);
+        wxBoxSizer* sigma_sizer = new wxBoxSizer(wxVERTICAL);
+        sigma_sizer->Add(sigma_label, 0, wxALL | wxALIGN_LEFT, 2);
+        sigma_sizer->Add(sigma_ctrl, 0, wxALL | wxALIGN_LEFT, 2);
         
-        wxStaticText* deltaLabel = new wxStaticText(panel, wxID_ANY, "Delta:");
-        m_deltaCtrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(100, -1));
-        wxBoxSizer* deltaSizer = new wxBoxSizer(wxVERTICAL);
-        deltaSizer->Add(deltaLabel, 0, wxALL, 5);
-        deltaSizer->Add(m_deltaCtrl, 0, wxALL, 5);
+        delta_sigma_sizer->Add(delta_sizer, 0, wxALL, 15);
+        delta_sigma_sizer->Add(sigma_sizer, 0, wxALL, 15);
         
-        wxStaticText* sigmaLabel = new wxStaticText(panel, wxID_ANY, "Sigma:");
-        m_sigmaCtrl = new wxTextCtrl(panel, wxID_ANY, "1.0", wxDefaultPosition, wxSize(100, -1));
-        wxBoxSizer* sigmaSizer = new wxBoxSizer(wxVERTICAL);
-        sigmaSizer->Add(sigmaLabel, 0, wxALL, 5);
-        sigmaSizer->Add(m_sigmaCtrl, 0, wxALL, 5);
-        
-        deltaSignmaSizer->Add(deltaSizer, 0, wxALL, 10);
-        deltaSignmaSizer->Add(sigmaSizer, 0, wxALL, 10);
-        
+        wxFloatingPointValidator<double> scaling_val(1);
+        scaling_val.SetRange(1.0, 1000.0);
+
         wxStaticText* scalingLabel = new wxStaticText(panel, wxID_ANY, "Max Scaling:");
-        m_scalingCtrl = new wxTextCtrl(panel, wxID_ANY, "100.0", wxDefaultPosition, wxSize(100, -1));
+        scaling_ctrl = new wxTextCtrl(panel, wxID_ANY, "100.0", wxDefaultPosition, wxSize(80, 25), 0, scaling_val);
         
-        m_verboseCtrl = new wxCheckBox(panel, wxID_ANY, "Verbose");
+        verbose_ctrl = new wxCheckBox(panel, wxID_ANY, "Verbose");
+        verbose_ctrl->SetValue(true);
         
-        mainSizer->Add(deltaSignmaSizer, 0, wxALL | wxCENTER, 10);
-        mainSizer->Add(scalingLabel, 0, wxALL | wxCENTER, 5);
-        mainSizer->Add(m_scalingCtrl, 0, wxALL | wxCENTER, 5);
-        mainSizer->Add(m_verboseCtrl, 0, wxALL | wxCENTER, 10);
+        wxButton* apply_btn = new wxButton(panel, wxID_APPLY, "Apply");
+
+        main_sizer->Add(delta_sigma_sizer, 0, wxALL | wxCENTER, 10);
+        main_sizer->Add(scalingLabel, 0, wxALL | wxCENTER, 5);
+        main_sizer->Add(scaling_ctrl, 0, wxALL | wxCENTER, 5);
+        main_sizer->Add(verbose_ctrl, 0, wxALL | wxCENTER, 10);
+        main_sizer->AddSpacer(15);
+        main_sizer->Add(apply_btn, 0, wxALL | wxCENTER, 10);
+        main_sizer->AddSpacer(10);
         
-        panel->SetSizer(mainSizer);
+        panel->SetSizer(main_sizer);
         
-        mainSizer->Fit(this);
+        wxBoxSizer* frame_sizer = new wxBoxSizer(wxVERTICAL);
+        frame_sizer->Add(panel, 1, wxEXPAND | wxALL, 0);
+        
+        frame_sizer->Fit(this);
         SetMinSize(GetSize());
+
+        this->Bind(wxEVT_CLOSE_WINDOW, &AlgoSettingsFrame::OnClose, this);
+        apply_btn->Bind(wxEVT_COMMAND_BUTTON_CLICKED, &AlgoSettingsFrame::OnApply, this);
     }
 
     RendSettingsFrame::RendSettingsFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style):
@@ -51,50 +69,53 @@ namespace genetic_gui
         wxPanel* panel = new wxPanel(this);
         
         show_legend_check = new wxCheckBox(panel, wxID_ANY, "Show legend");
+        show_legend_check->SetValue(true);
         multisampling_check = new wxCheckBox(panel, wxID_ANY, "Multisampling");
+        multisampling_check->SetValue(true); 
+        
         
         wxStaticText* resolutionLabel = new wxStaticText(panel, wxID_ANY, "Resolution:");
         resolution_spin = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString, 
                                         wxDefaultPosition, wxDefaultSize,
-                                        wxSP_ARROW_KEYS, 100, 1500, 500);
+                                        wxSP_ARROW_KEYS, 10, 500, 50);
         
         wxStaticText* fpsLabel = new wxStaticText(panel, wxID_ANY, "FPS:");
         fps_spin = new wxSpinCtrl(panel, wxID_ANY, wxEmptyString,
                                 wxDefaultPosition, wxDefaultSize,
-                                wxSP_ARROW_KEYS, 50, 240, 100);
+                                wxSP_ARROW_KEYS, 15, 120, 30);
         
         apply_btn = new wxButton(panel, wxID_OK, "Apply");
         
-        wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+        wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
         
-        wxStaticBoxSizer* displaySizer = new wxStaticBoxSizer(wxVERTICAL, panel, "Display");
-        displaySizer->Add(show_legend_check, 0, wxALL, 5);
+        wxStaticBoxSizer* display_sizer = new wxStaticBoxSizer(wxVERTICAL, panel, "Display");
+        display_sizer->Add(show_legend_check, 0, wxALL, 5);
         
-        wxStaticBoxSizer* qualitySizer = new wxStaticBoxSizer(wxVERTICAL, panel, "Quality");
-        qualitySizer->Add(multisampling_check, 0, wxALL, 5);
+        wxStaticBoxSizer* quality_sizer = new wxStaticBoxSizer(wxVERTICAL, panel, "Quality");
+        quality_sizer->Add(multisampling_check, 0, wxALL, 5);
         
-        wxFlexGridSizer* gridSizer = new wxFlexGridSizer(2, 2, 5, 10);
-        gridSizer->Add(resolutionLabel, 0, wxALIGN_CENTER_VERTICAL);
-        gridSizer->Add(resolution_spin, 0, wxEXPAND);
-        gridSizer->Add(fpsLabel, 0, wxALIGN_CENTER_VERTICAL);
-        gridSizer->Add(fps_spin, 0, wxEXPAND);
-        gridSizer->AddGrowableCol(1);
+        wxFlexGridSizer* grid_sizer = new wxFlexGridSizer(2, 2, 5, 10);
+        grid_sizer->Add(resolutionLabel, 0, wxALIGN_CENTER_VERTICAL);
+        grid_sizer->Add(resolution_spin, 0, wxEXPAND);
+        grid_sizer->Add(fpsLabel, 0, wxALIGN_CENTER_VERTICAL);
+        grid_sizer->Add(fps_spin, 0, wxEXPAND);
+        grid_sizer->AddGrowableCol(1);
         
-        qualitySizer->Add(gridSizer, 0, wxALL | wxEXPAND, 5);
+        quality_sizer->Add(grid_sizer, 0, wxALL | wxEXPAND, 5);
         
         wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
         buttonSizer->Add(apply_btn, 0, wxALL, 5);
         
-        mainSizer->Add(displaySizer, 0, wxALL | wxEXPAND, 10);
-        mainSizer->Add(qualitySizer, 0, wxALL | wxEXPAND, 10);
-        mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_CENTER, 10);
+        main_sizer->Add(display_sizer, 0, wxALL | wxEXPAND, 10);
+        main_sizer->Add(quality_sizer, 0, wxALL | wxEXPAND, 10);
+        main_sizer->Add(buttonSizer, 0, wxALL | wxALIGN_CENTER, 10);
         
-        panel->SetSizer(mainSizer);
+        panel->SetSizer(main_sizer);
         
-        mainSizer->Fit(this);
+        main_sizer->Fit(this);
         SetMinSize(GetSize());
         
         this->Bind(wxEVT_CLOSE_WINDOW, &RendSettingsFrame::OnClose, this);
+        this->apply_btn->Bind(wxEVT_COMMAND_BUTTON_CLICKED, &RendSettingsFrame::OnApply, this);
     }
-
 }

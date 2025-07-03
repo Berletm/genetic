@@ -29,6 +29,8 @@ namespace genetic
         std::function<Individ(Generation&)> selection_strategy,
         std::function<Individs(Individ, Individ)> recombination_strategy,
         std::function<Individ(Individ)> mutation_strategy,
+        double delta = SIGMA,
+        double sigma = DELTA,
         bool verbose = false);
 
     Individ get_best(const Generation& current_generation);

@@ -49,6 +49,8 @@ namespace genetic
         std::function<Individ(Generation&)> selection_strategy,
         std::function<Individs(Individ, Individ)> recombination_strategy,
         std::function<Individ(Individ)> mutation_strategy,
+        double delta,
+        double sigma,
         bool verbose)
     {
         measure_generation(poly, current_generation);
@@ -61,7 +63,7 @@ namespace genetic
         
         current_generation = selection(current_generation, selection_strategy);
         current_generation = recombination(recombination_proba, current_generation, recombination_strategy);
-        current_generation = mutation(mutation_proba, current_generation, mutation_strategy);
+        current_generation = mutation(mutation_proba, current_generation, mutation_strategy, delta, sigma);
 
         return current_generation;
     }

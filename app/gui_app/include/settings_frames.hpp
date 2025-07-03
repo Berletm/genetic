@@ -12,12 +12,12 @@ namespace genetic_gui
     {
     private:
         void OnClose(wxCloseEvent &event);
-
+        void OnApply(wxCommandEvent &event);
     private:
-        wxTextCtrl *m_deltaCtrl;
-        wxTextCtrl *m_sigmaCtrl;
-        wxTextCtrl *m_scalingCtrl;
-        wxCheckBox *m_verboseCtrl;
+        wxTextCtrl *delta_ctrl;
+        wxTextCtrl *sigma_ctrl;
+        wxTextCtrl *scaling_ctrl;
+        wxCheckBox *verbose_ctrl;
 
     public:
         AlgoSettingsFrame(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style);
@@ -27,7 +27,8 @@ namespace genetic_gui
     {
     private:
         void OnClose(wxCloseEvent &event);
-
+        void RefreshPlots();
+        void OnApply(wxCommandEvent &event);
     private:
         wxCheckBox *show_legend_check;
         wxCheckBox *multisampling_check;

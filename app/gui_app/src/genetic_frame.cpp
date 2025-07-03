@@ -2,8 +2,7 @@
 
 #include <wx/artprov.h>
 #include <wx/graphics.h>
-
-
+#include <format>
 
 namespace genetic_gui
 {
@@ -15,7 +14,8 @@ namespace genetic_gui
         EVT_MENU(ID_RendSettings, GeneticFrame::RendSettings)
         EVT_MENU(ID_AlgoSettings, GeneticFrame::AlgoSettings)
         EVT_BUTTON(ID_Next, GeneticFrame::Next)
-        EVT_BUTTON(ID_Next, GeneticFrame::Prev)
+        EVT_BUTTON(ID_Prev, GeneticFrame::Prev)
+        EVT_BUTTON(ID_Stop, GeneticFrame::Stop)
     END_EVENT_TABLE()
 
     wxBitmap CreateNextBitmap(int width, int height, const wxColour& color) 
@@ -80,6 +80,43 @@ namespace genetic_gui
         return bmp;
     }
 
+    wxBitmap CreateStopBitmap(int width, int height, const wxColour& color) 
+    {
+        wxBitmap bmp(width, height, 32);
+        bmp.UseAlpha();
+        
+        wxMemoryDC memDC(bmp);
+        memDC.SetBackground(*wxTRANSPARENT_BRUSH);
+        memDC.Clear();
+        
+        wxGraphicsContext* gc = wxGraphicsContext::Create(memDC);
+        if (gc) 
+        {
+            gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+            
+            int squareSize = std::min(width, height);
+            
+            int x = (width - squareSize) / 2;
+            int y = (height - squareSize) / 2;
+            
+            wxGraphicsPath path = gc->CreatePath();
+            path.MoveToPoint(x, y);                    
+            path.AddLineToPoint(x + squareSize, y);    
+            path.AddLineToPoint(x + squareSize, y + squareSize); 
+            path.AddLineToPoint(x, y + squareSize);
+            path.CloseSubpath();
+            
+            gc->SetBrush(wxBrush(color));
+            gc->SetPen(wxPen(color, 1));
+            gc->FillPath(path);
+            
+            delete gc;
+        }
+        
+        memDC.SelectObject(wxNullBitmap);
+        return bmp;
+    }
+
     GeneticFrame::GeneticFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style):  wxFrame(parent, id, title, pos, size, style)
     {        
         const wxColour textColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
@@ -88,6 +125,7 @@ namespace genetic_gui
 
         wxBitmap next_bmp = CreateNextBitmap(12, 12, textColor);
         wxBitmap prev_bmp = CreatePrevBitmap(12, 12, textColor);
+        wxBitmap stop_bmp = CreateStopBitmap(12, 12, textColor);
 
         wxBitmapButton *btn_next = new wxBitmapButton(
                 statusbar, 
@@ -104,6 +142,17 @@ namespace genetic_gui
 
         btn_next->SetSize(btnX, btnY, btnWidth, btnHeight);
 
+        const int stop_btnX = btnX - btnWidth;
+        
+        wxBitmapButton *btn_stop = new wxBitmapButton(
+                statusbar, 
+                ID_Stop, 
+                stop_bmp,
+                wxDefaultPosition,
+                wxDefaultSize,
+                wxBORDER_NONE);
+        btn_stop->SetSize(stop_btnX, btnY, btnWidth, btnHeight);
+
         wxBitmapButton *btn_prev = new wxBitmapButton(
                 statusbar, 
                 ID_Prev, 
@@ -112,7 +161,7 @@ namespace genetic_gui
                 wxDefaultSize,
                 wxBORDER_NONE);
 
-        const int prev_btnX = btnX - btnWidth;
+        const int prev_btnX = stop_btnX - btnWidth;
 
         btn_prev->SetSize(prev_btnX, btnY, btnWidth, btnHeight);
 
@@ -135,7 +184,7 @@ namespace genetic_gui
         settings->Append(rendering_settings);
         settings->Append(algorithm_settings);
 
-        wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
+        main_sizer = new wxBoxSizer(wxHORIZONTAL);
     
         algoplot_sizer = new wxBoxSizer(wxVERTICAL);
         alogplot_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
@@ -160,10 +209,31 @@ namespace genetic_gui
 
     void GeneticFrame::OnTimer(wxTimerEvent&) 
     {
+        if (mean_fitness_history.size() > 0 && std::isnan(mean_fitness_history.back()))
+        {
+            timer.Stop();
+            std::string str = std::format("Error occured, nan fitness value. Stopping algorithm.");
+            statusbar->SetStatusText(str);
+            return;
+        }
+        
+        if (best_individ_history.size() > 0 && mean_fitness_history.size() > 0 && algo_settings.verbose)
+        {
+            std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 
+                             mean_fitness_history.back(), 
+                             best_individ_history.back().fitness);
+            statusbar->SetStatusText(str);
+        }
+        else
+        {
+            statusbar->SetStatusText("Algorithm is working...");
+        }
+
         if (!controller.MakeStep()) 
         {
             timer.Stop();
-            wxMessageBox("Algorithm finished!");
+            std::string str = std::format("Algorithm successfully ended! Best fitness: {:.2f}", best_individ_history.back().fitness);
+            statusbar->SetStatusText(str);
         }
     }
 
@@ -174,6 +244,6 @@ namespace genetic_gui
         controller.AddObserver(fitnessplot);
 
         timer.Bind(wxEVT_TIMER, &GeneticFrame::OnTimer, this);
-        timer.Start(render_settings.fps);
+        timer.Start(1000 / render_settings.fps);
     }
 }

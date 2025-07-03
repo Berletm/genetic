@@ -1,5 +1,6 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <GL/glut.h>
 #include <wx/colour.h>
 #include <wx/wx.h>
 #include <wx/sysopt.h>
@@ -14,14 +15,21 @@ namespace genetic_gui
     Plot::Plot(wxWindow *parent, GeneticController *ctr)
     : wxGLCanvas(
         parent, wxID_ANY, 
-        nullptr,  
+        render_settings.gl_attribs[0] == 0 ? nullptr : render_settings.gl_attribs,  
         wxDefaultPosition, 
         wxDefaultSize, 
         wxFULL_REPAINT_ON_RESIZE), context(this), controller(ctr)
     {
-        wxGLAttributes attrs;
-        attrs.PlatformDefaults().EndList();
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    }
+
+    void Plot::ApplyRenderSettings()
+    {
+        SetCurrent(context);
+        if (render_settings.gl_attribs[0] == WX_GL_SAMPLES) glEnable(GL_MULTISAMPLE);
+        else glDisable(GL_MULTISAMPLE);
+
+        this->Refresh();
     }
 
     void Plot::RenderGrid()
@@ -79,59 +87,39 @@ namespace genetic_gui
         glLineWidth(2.0f);
         glBegin(GL_LINES);
 
-        if (render_settings.y_min <= 0 && render_settings.y_max >= 0)
-        {
-            glVertex2f(render_settings.x_min, 0.0f);
-            glVertex2f(render_settings.x_max, 0.0f);
-        }
+        glVertex2f(x_min, 0.0f);
+        glVertex2f(x_max, 0.0f);
 
-        if (render_settings.x_min <= 0 && render_settings.x_max >= 0)
-        {
-            glVertex2f(0.0f, render_settings.y_min);
-            glVertex2f(0.0f, render_settings.y_max);
-        }
+        glVertex2f(0.0f, y_min);
+        glVertex2f(0.0f, y_max);
 
         glEnd();
         glLineWidth(1.0f);
 
-        float arrow_size_x = (render_settings.x_max - render_settings.x_min) * 0.015f;
-        float arrow_size_y = (render_settings.y_max - render_settings.y_min) * 0.02f;
+        float arrow_size_x = (x_max - x_min) * 0.015f;
+        float arrow_size_y = (y_max - y_min) * 0.02f;
 
         glBegin(GL_TRIANGLES);
 
-        if (render_settings.y_min <= 0 && render_settings.y_max >= 0)
-        {
-            float y = 0.0f;
-            float x = render_settings.x_max * x_scale_factor;
-            glVertex2f(x, y);
-            glVertex2f(x - arrow_size_x, y + arrow_size_y / 2);
-            glVertex2f(x - arrow_size_x, y - arrow_size_y / 2);
-        }
+        float y_axis = 0.0f;
+        float x_arrow = x_max;
+        glVertex2f(x_arrow, y_axis);
+        glVertex2f(x_arrow - arrow_size_x, y_axis + arrow_size_y / 2);
+        glVertex2f(x_arrow - arrow_size_x, y_axis - arrow_size_y / 2);
 
-        if (render_settings.x_min <= 0 && render_settings.x_max >= 0)
-        {
-            float x = 0.0f;
-            float y = render_settings.y_max;
-            glVertex2f(x, y);
-            glVertex2f(x - arrow_size_x / 2, y - arrow_size_y);
-            glVertex2f(x + arrow_size_x / 2, y - arrow_size_y);
-        }
+        float x_axis = 0.0f;
+        float y_arrow = y_max;
+        glVertex2f(x_axis, y_arrow);
+        glVertex2f(x_axis - arrow_size_x / 2, y_arrow - arrow_size_y);
+        glVertex2f(x_axis + arrow_size_x / 2, y_arrow - arrow_size_y);
 
         glEnd();
     }
 
-    void Plot::UpdatePlotParameters(double center, double range, double ymin, double ymax) 
-    {
-        x_center = center;
-        x_range = range;
-        y_min = ymin;
-        y_max = ymax;
-    }
-
     void Plot::PrepareForRendering() 
     {
-        x_center = (x_min + x_max) / 2.0;
-        x_range = (x_max - x_min) * x_scale_factor;
+        x_min = render_settings.x_min;
+        x_max = render_settings.x_max;
         y_min = render_settings.y_min;
         y_max = render_settings.y_max;
     }
@@ -157,8 +145,7 @@ namespace genetic_gui
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         
-        gluOrtho2D(x_center - x_range/2, x_center + x_range/2, 
-                y_min, y_max);
+        gluOrtho2D(x_min, x_max, y_min, y_max);
         
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -176,22 +163,110 @@ namespace genetic_gui
     END_EVENT_TABLE()
 
     // AlgoPlot
-    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController* ctr) : Plot(parent, ctr)
+    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController *ctr) 
+        : Plot(parent, ctr)
     {
+        static bool glut_initialized = false;
+        if (!glut_initialized) 
+        {
+            int argc = 0;
+            char* argv[] = { nullptr };
+            glutInit(&argc, argv);
+            glut_initialized = true;
+        }
+    }
 
+    void AlgoPlot::RenderLegend()
+    {
+       if (!render_settings.show_legend) return;
+
+        float legend_width = (x_max - x_min) * 0.25f; 
+        float legend_height = (y_max - y_min) * 0.2f;
+        float padding = (x_max - x_min) * 0.02f;
+
+        float legend_x = x_max - legend_width - padding;
+        float legend_y = y_max - legend_height - padding;
+
+        glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
+        glBegin(GL_QUADS);
+        glVertex2f(legend_x, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y + legend_height);
+        glVertex2f(legend_x, legend_y + legend_height);
+        glEnd();
+
+        glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+        glLineWidth(1.0f);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(legend_x, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y + legend_height);
+        glVertex2f(legend_x, legend_y + legend_height);
+        glEnd();
+
+        float line_spacing = legend_height * 0.4f; 
+        float line_length = legend_width * 0.3f;   
+        float text_offset = legend_width * 0.05f; 
+        float line_y_offset = legend_height * 0.75f;
+
+        float item1_y = legend_y + line_y_offset;
+        
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        glVertex2f(legend_x + text_offset, item1_y);
+        glVertex2f(legend_x + text_offset + line_length, item1_y);
+        glEnd();
+
+        float item2_y = legend_y + line_y_offset - line_spacing;
+        
+        glColor3f(0.0f, 0.0f, 1.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        glVertex2f(legend_x + text_offset, item2_y);
+        glVertex2f(legend_x + text_offset + line_length, item2_y);
+        glEnd();
+
+        glLineWidth(1.0f);
+        RenderLegendText(legend_x, legend_y, legend_width, legend_height, text_offset, line_length, line_spacing, line_y_offset);
+    }
+
+    void AlgoPlot::RenderLegendText(float legend_x, float legend_y, float legend_width, float legend_height,
+                                 float text_offset, float line_length, float line_spacing, float line_y_offset)
+    {
+        glColor3f(0.0f, 0.0f, 0.0f);
+        
+        float text_x_world = legend_x + text_offset + line_length + text_offset * 0.5f;
+        float text_y1_world = legend_y + line_y_offset;
+        float text_y2_world = legend_y + line_y_offset - line_spacing;
+        
+        glRasterPos2f(text_x_world, text_y1_world);
+        const char* text1 = "Polynomial";
+        for (const char* c = text1; *c != '\0'; c++) 
+        {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+        }
+        
+        glRasterPos2f(text_x_world, text_y2_world);
+        const char* text2 = "Individual";
+        for (const char* c = text2; *c != '\0'; c++) 
+        {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+        }
     }
 
     void AlgoPlot::RenderData()
     {
         if (!controller) return;
+        if (!controller->IsRunning()) return;
         
         glLineWidth(1.5f);
         glColor3f(1.0f, 0.0f, 0.0f);
         glBegin(GL_LINE_STRIP);
 
-        double dx = (render_settings.x_max - render_settings.x_min) / render_settings.resolution;
+        double dx = (x_max - x_min) / render_settings.resolution;
 
-        for (double x = render_settings.x_min; x <= render_settings.x_max; x += dx) 
+        for (double x = x_min; x <= x_max; x += dx) 
         {
             glVertex2f(x, poly.eval(x));
         }
@@ -211,22 +286,25 @@ namespace genetic_gui
             glEnd();
             glLineWidth(1.0f);
         }
+        RenderLegend();
     }
 
     FitnessPlot::FitnessPlot(wxWindow *parent, GeneticController* ctr)
     : Plot(parent, ctr)
     {
         SetXScaleFactor(0.5);
-        x_min = 0;
-        x_max = 10.0;
-        y_min = -1.0;
-        y_max = 1.0;
     }
 
     void FitnessPlot::PrepareForRendering() 
     {
-        if (!controller || mean_fitness_history.empty()) {
-            Plot::PrepareForRendering();
+        if (!controller || mean_fitness_history.empty()) 
+        {
+            x_min = 0.0;
+            x_max = 10.0;
+            y_min = -1.0;
+            y_max = 1.0;
+            x_center = 5.0;
+            x_range = 10.0;
             return;
         }
 
@@ -235,51 +313,29 @@ namespace genetic_gui
         double new_target_x_max = std::max(static_cast<double>(last_gen), 10.0);
         
         auto [min_it, max_it] = std::minmax_element(mean_fitness_history.begin(), mean_fitness_history.end());
-        double y_range = *max_it - *min_it;
+        double y_data_range = *max_it - *min_it;
         
-        if (y_range < 1e-10) {
-            y_range = 1.0;
-            *min_it = *max_it - 0.5;
+        if (y_data_range < 1e-10) {
+            y_data_range = 1.0;
         }
         
-        double new_target_y_min = *min_it - y_range * 0.2;
-        double new_target_y_max = *max_it + y_range * 0.2;
+        double new_target_y_min = *min_it - y_data_range * 0.1;
+        double new_target_y_max = *max_it + y_data_range * 0.1;
         
-        if (new_target_y_max - new_target_y_min < 0.1) 
+        const double expansion_speed = 0.1;
+        
+        if (new_target_x_max > x_max || x_max == 10.0) 
         {
-            new_target_y_min = -0.05;
-            new_target_y_max = 0.05;
+            x_max = x_max * (1.0 - expansion_speed) + new_target_x_max * expansion_speed;
         }
-
-        const double expansion_speed = 0.2;
-        x_max = x_max * (1.0 - expansion_speed) + new_target_x_max * expansion_speed;
+        
         y_min = y_min * (1.0 - expansion_speed) + new_target_y_min * expansion_speed;
         y_max = y_max * (1.0 - expansion_speed) + new_target_y_max * expansion_speed;
 
-        x_min = 0;
-        x_center = x_max / 2.0;
-        x_range = x_max * 1.05;
-
-        wxSize size = GetSize();
-        float aspect = float(size.x)/size.y;
-        float data_aspect = (x_max - x_min)/(y_max - y_min);
+        x_min = 0.0;
         
-        if(data_aspect > aspect) {
-            float new_height = (x_max - x_min)/aspect;
-            float y_center = (y_min + y_max)/2;
-            y_min = y_center - new_height/2;
-            y_max = y_center + new_height/2;
-        }
-        else 
-        {
-            float new_width = (y_max - y_min)*aspect;
-            float x_center = (x_min + x_max)/2;
-            x_min = x_center - new_width/2;
-            x_max = x_center + new_width/2;
-            x_range = x_max - x_min;
-        }
-
-        
+        x_center = (x_min + x_max) / 2.0;
+        x_range = (x_max - x_min);
     }
 
     void FitnessPlot::RenderData()
@@ -289,7 +345,8 @@ namespace genetic_gui
         glLineWidth(2.0f);
         glColor3f(0.0f, 0.5f, 0.0f);
         glBegin(GL_LINE_STRIP);
-        for (size_t i = 0; i < mean_fitness_history.size(); ++i) {
+        for (size_t i = 0; i < mean_fitness_history.size(); ++i) 
+        {
             glVertex2f(static_cast<float>(i), mean_fitness_history[i]);
         }
         glEnd();
@@ -297,39 +354,51 @@ namespace genetic_gui
         glPointSize(5.0f);
         glColor3f(1.0f, 0.0f, 0.0f);
         glBegin(GL_POINTS);
-        if (!mean_fitness_history.empty()) {
+        if (!mean_fitness_history.empty()) 
+        {
             size_t last = mean_fitness_history.size() - 1;
             glVertex2f(static_cast<float>(last), mean_fitness_history[last]);
         }
         glEnd();
     }
-
+   
     void FitnessPlot::RenderAxes()
     {
         glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-        glLineWidth(2.0f);
+        glLineWidth(3.0f);
         
-        float x_axis_y = y_min * 1.15;
+        float axis_offset_x = (x_max - x_min) * 0.02f;
+        float axis_offset_y = (y_max - y_min) * 0.05f;
+        
+        float axis_x_start = x_min + axis_offset_x;
+        float axis_x_end = x_max - axis_offset_x;
+        float axis_y_start = y_min + axis_offset_y;
+        float axis_y_end = y_max - axis_offset_y;
         
         glBegin(GL_LINES);
-        glVertex2f(x_min, x_axis_y);
-        glVertex2f(x_max, x_axis_y);
+        glVertex2f(axis_x_start, axis_y_start);
+        glVertex2f(axis_x_end, axis_y_start);
         
-        glVertex2f(0.0f, y_min);
-        glVertex2f(0.0f, y_max);
+        glVertex2f(axis_x_start, axis_y_start);
+        glVertex2f(axis_x_start, axis_y_end);
         glEnd();
         
-        float arrow_size_x = (x_max - x_min) * 0.01f;
-        float arrow_size_y = (y_max - y_min) * 0.02f;
+        double arrow_size_x = (x_max - x_min) * 0.03f;
+        double arrow_size_y = (y_max - y_min) * 0.05f;
+        
+        arrow_size_x = std::max(arrow_size_x, (x_max - x_min) * 0.02f);
+        arrow_size_y = std::max(arrow_size_y, (y_max - y_min) * 0.03f);
         
         glBegin(GL_TRIANGLES);
-        glVertex2f(x_max, x_axis_y);
-        glVertex2f(x_max - arrow_size_x, x_axis_y + arrow_size_y);
-        glVertex2f(x_max - arrow_size_x, x_axis_y - arrow_size_y);
         
-        glVertex2f(0.0f, y_max);
-        glVertex2f(-arrow_size_x, y_max - arrow_size_y);
-        glVertex2f(arrow_size_x, y_max - arrow_size_y);
+        glVertex2f(axis_x_end, axis_y_start);
+        glVertex2f(axis_x_end - arrow_size_x, axis_y_start + arrow_size_y * 0.5f);
+        glVertex2f(axis_x_end - arrow_size_x, axis_y_start - arrow_size_y * 0.5f);
+        
+        glVertex2f(axis_x_start, axis_y_end);
+        glVertex2f(axis_x_start - arrow_size_x * 0.5f, axis_y_end - arrow_size_y);
+        glVertex2f(axis_x_start + arrow_size_x * 0.5f, axis_y_end - arrow_size_y);
+        
         glEnd();
         
         glLineWidth(1.0f);

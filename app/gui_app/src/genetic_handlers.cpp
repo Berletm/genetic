@@ -3,6 +3,7 @@
 #include "settings_frames.hpp"
 #include <evolution.hpp>
 #include <sstream>
+#include <format>
 #include <string>
 
 namespace genetic_gui
@@ -66,12 +67,84 @@ namespace genetic_gui
 
     void GeneticFrame::Next(wxCommandEvent& event)
     {
+        if (controller.IsRunning())
+        {
+            if (timer.IsRunning()) timer.Stop();
 
+            if (controller.CanRedo())
+            {
+                controller.RedoStep();
+                
+                std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 
+                                mean_fitness_history.back(), 
+                                best_individ_history.back().fitness);
+                statusbar->SetStatusText(str);
+            }
+            else
+            {
+                if (mean_fitness_history.size() > 0 && std::isnan(mean_fitness_history.back()))
+                {
+                    std::string str = std::format("Error occured, nan fitness value. Stopping algorithm.");
+                    statusbar->SetStatusText(str);
+                    return;
+                }
+                
+                if (best_individ_history.size() > 0 && mean_fitness_history.size() > 0 && algo_settings.verbose)
+                {
+                    std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 
+                                    mean_fitness_history.back(), 
+                                    best_individ_history.back().fitness);
+                    statusbar->SetStatusText(str);
+                }
+                else
+                {
+                    statusbar->SetStatusText("Algorithm is working...");
+                }
+                
+                if (!controller.MakeStep()) 
+                {
+                    std::string str = std::format("Algorithm successfully ended! Best fitness: {:.2f}", best_individ_history.back().fitness);
+                    statusbar->SetStatusText(str);
+                }
+            }
+        }
+        else 
+        {
+            std::string str = std::format("Error. Algorithm is not in progress.");
+            statusbar->SetStatusText(str);
+        }
     }
     
     void GeneticFrame::Prev(wxCommandEvent& event)
     {
+        if (controller.IsRunning()) 
+        {
+            if (timer.IsRunning()) timer.Stop();
 
+            if (controller.MakeStepBack())
+            {
+                std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 
+                                mean_fitness_history.back(), 
+                                best_individ_history.back().fitness);
+                statusbar->SetStatusText(str);
+            }
+            else
+            {
+                std::string str = std::format("Can not go any further.");
+                statusbar->SetStatusText(str);
+            }
+        }
+        else
+        {
+            std::string str = std::format("Error. Algorithm is not in progress.");
+            statusbar->SetStatusText(str);
+        }
+    }
+
+    void GeneticFrame::Stop(wxCommandEvent& event)
+    {
+        if (!timer.IsRunning()) timer.Start(1000 / render_settings.fps);
+        else timer.Stop();
     }
 
     void NewFrame::OnNumberInput(wxCommandEvent& event) 
@@ -100,53 +173,198 @@ namespace genetic_gui
     genetic::Polynomial NewFrame::ParsePoly(const std::string& poly_str) 
     {
         genetic::Polynomial res;
-        std::istringstream iss(poly_str);
-        std::string term;
         
-        while (iss >> term) 
+        std::string cleaned = poly_str;
+        cleaned.erase(std::remove(cleaned.begin(), cleaned.end(), ' '), cleaned.end());
+        
+        if (cleaned.empty()) {
+            return res;
+        }
+        
+        if (cleaned[0] != '+' && cleaned[0] != '-') 
         {
-            if (term == "+") continue;
-            
-            size_t x_pos = term.find('x');
-            double coefficient = 1.0;
-            double power = 0.0;
-            
-            if (x_pos != std::string::npos) 
-            {
-                std::string coeff_str = term.substr(0, x_pos);
-                if (coeff_str.empty() || coeff_str == "+") 
-                {
-                    coefficient = 1.0;
-                } 
-                else if (coeff_str == "-") 
-                {
-                    coefficient = -1.0;
-                } 
-                else 
-                {
-                    coefficient = std::stod(coeff_str);
-                }
-                
-                size_t caret_pos = term.find('^', x_pos);
-                if (caret_pos != std::string::npos) 
-                {
-                    power = std::stod(term.substr(caret_pos + 1));
-                } 
-                else 
-                {
-                    power = 1.0;
-                }
-            } 
-            else 
-            {
-                coefficient = std::stod(term);
-                power = 0.0;
+            cleaned = "+" + cleaned;
+        }
+        
+        std::vector<std::string> terms;
+        size_t start = 0;
+        bool in_exponent = false;
+        
+        for (size_t i = 0; i < cleaned.length(); ++i) 
+        {
+            if (cleaned[i] == '^') {
+                in_exponent = true;
+                continue;
             }
             
-            res.push_back({coefficient, power});
+            if (in_exponent && (cleaned[i] == '+' || cleaned[i] == '-')) 
+            {
+                in_exponent = false;
+            }
+            
+            if (!in_exponent && (cleaned[i] == '+' || cleaned[i] == '-') && i > 0) 
+            {
+                terms.push_back(cleaned.substr(start, i - start));
+                start = i;
+            }
+        }
+        
+        if (start < cleaned.length()) 
+        {
+            terms.push_back(cleaned.substr(start));
+        }
+        
+        for (const std::string& term : terms) 
+        {
+            if (term.empty()) continue;
+            
+            try 
+            {
+                ParseTerm(term, res);
+            } 
+            catch (const std::exception& e) 
+            {
+                throw std::runtime_error("Error parsing term '" + term + "': " + e.what());
+            }
         }
         
         return res;
+    }
+
+    void NewFrame::ParseTerm(const std::string& term, genetic::Polynomial& poly) 
+    {
+        if (term.empty()) return;
+        
+        double coefficient = 1.0;
+        double power = 0.0;
+        
+        std::string work_term = term;
+        bool negative = false;
+        
+        if (work_term[0] == '-') 
+        {
+            negative = true;
+            work_term = work_term.substr(1);
+        } 
+        else if (work_term[0] == '+') 
+        {
+            work_term = work_term.substr(1);
+        }
+        
+        if (work_term.empty()) {
+            poly.push_back({negative ? -1.0 : 1.0, 0.0});
+            return;
+        }
+        
+        size_t x_pos = work_term.find('x');
+        
+        if (x_pos != std::string::npos) {
+            std::string coeff_part = work_term.substr(0, x_pos);
+            
+            if (!coeff_part.empty() && coeff_part.back() == '*') {
+                coeff_part.pop_back();
+            }
+            
+            if (coeff_part.empty()) {
+                coefficient = 1.0;
+            } 
+            else if (coeff_part == "-") {
+                coefficient = -1.0;
+            }
+            else {
+                coefficient = ParseCoefficient(coeff_part);
+            }
+            
+            if (x_pos + 1 < work_term.length() && work_term[x_pos + 1] == '^') 
+            {
+                std::string power_str = work_term.substr(x_pos + 2);
+                if (power_str.empty()) {
+                    throw std::runtime_error("Missing exponent after '^'");
+                }
+                power = ParseCoefficient(power_str);
+            } 
+            else if (x_pos + 1 < work_term.length()) 
+            {
+                throw std::runtime_error("Unexpected character after 'x'");
+            }
+            else 
+            {
+                power = 1.0;
+            }
+        } 
+        else 
+        {
+            coefficient = ParseCoefficient(work_term);
+            power = 0.0;
+        }
+        
+        if (negative) 
+        {
+            coefficient = -coefficient;
+        }
+        
+        poly.push_back({coefficient, power});
+    }
+
+    double NewFrame::ParseCoefficient(const std::string& coeff_str) 
+    {
+        if (coeff_str.empty()) 
+        {
+            return 1.0;
+        }
+        
+        try {
+            std::string converted = coeff_str;
+            std::replace(converted.begin(), converted.end(), ',', '.');
+            
+            size_t slash_pos = converted.find('/');
+            if (slash_pos != std::string::npos) 
+            {
+                std::string numerator_str = converted.substr(0, slash_pos);
+                std::string denominator_str = converted.substr(slash_pos + 1);
+                
+                if (numerator_str.empty() || denominator_str.empty()) {
+                    throw std::runtime_error("Invalid fraction format");
+                }
+                
+                double numerator = std::stod(numerator_str);
+                double denominator = std::stod(denominator_str);
+                
+                if (denominator == 0.0) {
+                    throw std::runtime_error("Division by zero in coefficient");
+                }
+                
+                return numerator / denominator;
+            } 
+            else 
+            {
+                return std::stod(converted);
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error("Invalid coefficient '" + coeff_str + "': " + e.what());
+        }
+    }
+
+    void NewFrame::RefreshPlots()
+    {
+        frames.mainFrame->timer.Stop();
+
+        frames.mainFrame->fitnessplot->Destroy();
+        frames.mainFrame->fitnessplot = new FitnessPlot(frames.mainFrame->fitnessplot_panel, &frames.mainFrame->controller);
+        frames.mainFrame->fitnessplot_sizer->Add(frames.mainFrame->fitnessplot, 1, wxALL|wxEXPAND, 2);
+        frames.mainFrame->fitnessplot_panel->Layout();
+
+        frames.mainFrame->algoplot->Destroy();
+        frames.mainFrame->algoplot = new AlgoPlot(frames.mainFrame->alogplot_panel, &frames.mainFrame->controller);
+        frames.mainFrame->algoplot_sizer->Add(frames.mainFrame->algoplot, 1,  wxALL|wxEXPAND, 2);
+        frames.mainFrame->alogplot_panel->Layout();
+
+        frames.mainFrame->controller.ClearObservers();
+
+        frames.mainFrame->controller.AddObserver(frames.mainFrame->algoplot);
+        frames.mainFrame->controller.AddObserver(frames.mainFrame->fitnessplot);
+
+        frames.mainFrame->timer.Start(1000 / render_settings.fps);
     }
 
     void NewFrame::OnCompute(wxCommandEvent& event)
@@ -158,9 +376,14 @@ namespace genetic_gui
         double left, right;
         interval_left_ctrl->GetValue().ToDouble(&left);
         interval_right_ctrl->GetValue().ToDouble(&right);
-        algo_settings.interval = genetic::Interval{left, right};
+        if (left == right)
+        {   
+            wxMessageBox("Wrong interval!", "Error", wxOK | wxICON_ERROR);
+            return;
+        }
+        algo_settings.interval = genetic::Interval{std::min(left, right), std::max(left, right)};
 
-        double padding_factor = 1.2;
+        double padding_factor = 1.1;
 
         render_settings.x_max = std::max(abs(left), abs(right)) * padding_factor;
         render_settings.x_min = -render_settings.x_max;
@@ -197,6 +420,8 @@ namespace genetic_gui
         algo_settings.recombination_strategy = recombination_map[genetic::RecombinationMethod(recombinationComboBox->GetSelection())];
         algo_settings.mutation_strategy = mutation_map[genetic::MutationMethod(mutationComboBox->GetSelection())];
 
+        RefreshPlots();
+
         geneticframe->StartAlgo();
 
         this->Hide();
@@ -208,8 +433,103 @@ namespace genetic_gui
         this->Hide();
     }
 
+    void AlgoSettingsFrame::OnApply(wxCommandEvent &event)
+    {
+        algo_settings.verbose = verbose_ctrl->GetValue();
+
+        double scaling;
+        scaling_ctrl->GetValue().ToDouble(&scaling);
+        if (scaling > 0)
+        {
+            algo_settings.max_after_scaling = scaling;
+        }
+        else
+        {
+            wxMessageBox("Wrong scaling!", "Error", wxOK | wxICON_ERROR);
+            return;
+        }
+
+        selection_map[genetic::SelectionMethod::LinearScaling] = 
+        [max_after_scaling = algo_settings.max_after_scaling](genetic::Generation& gen) {
+            if(!gen.is_scaled) apply_scaling(genetic::ScalingType::linear, gen, max_after_scaling);
+            return roulette_rule(gen);
+        };
+
+        double delta, sigma;
+
+        delta_ctrl->GetValue().ToDouble(&delta);
+
+        algo_settings.delta = delta;
+
+        sigma_ctrl->GetValue().ToDouble(&sigma);
+
+        algo_settings.sigma = sigma;
+
+        this->Hide();
+    }
+
     void RendSettingsFrame::OnClose(wxCloseEvent& event)
     {
+        this->Hide();
+    }
+
+    void RendSettingsFrame::RefreshPlots()
+    {
+        frames.mainFrame->timer.Stop();
+
+        frames.mainFrame->fitnessplot->Destroy();
+        frames.mainFrame->fitnessplot = new FitnessPlot(frames.mainFrame->fitnessplot_panel, &frames.mainFrame->controller);
+        frames.mainFrame->fitnessplot_sizer->Add(frames.mainFrame->fitnessplot, 1, wxALL|wxEXPAND, 2);
+        frames.mainFrame->fitnessplot_panel->Layout();
+
+        frames.mainFrame->algoplot->Destroy();
+        frames.mainFrame->algoplot = new AlgoPlot(frames.mainFrame->alogplot_panel, &frames.mainFrame->controller);
+        frames.mainFrame->algoplot_sizer->Add(frames.mainFrame->algoplot, 1,  wxALL|wxEXPAND, 2);
+        frames.mainFrame->alogplot_panel->Layout();
+
+        frames.mainFrame->controller.ClearObservers();
+
+        frames.mainFrame->controller.AddObserver(frames.mainFrame->algoplot);
+        frames.mainFrame->controller.AddObserver(frames.mainFrame->fitnessplot);
+
+        frames.mainFrame->timer.Start(1000 / render_settings.fps);
+    }
+
+    void RendSettingsFrame::OnApply(wxCommandEvent &event)
+    {
+        int fps = fps_spin->GetValue();
+        render_settings.fps = fps;
+        
+        int res = resolution_spin->GetValue();
+        render_settings.resolution = res;
+
+        if (multisampling_check->IsChecked()) 
+        {
+            render_settings.gl_attribs[0] = WX_GL_SAMPLES;
+            render_settings.gl_attribs[1] = 4;
+            render_settings.gl_attribs[2] = 0;
+        }
+        else 
+        {
+            render_settings.gl_attribs[0] = 0;
+        }
+
+        render_settings.show_legend = show_legend_check->IsChecked();
+
+        RefreshPlots();
+
+        frames.mainFrame->algoplot->ApplyRenderSettings();
+        frames.mainFrame->fitnessplot->ApplyRenderSettings();
+
+        if (frames.mainFrame->timer.IsRunning())
+        {
+            frames.mainFrame->timer.Stop();
+
+            int interval = (render_settings.fps > 0) ? (1000 / render_settings.fps) : 100;
+
+            frames.mainFrame->timer.Start(interval);
+        }
+
         this->Hide();
     }
 }
