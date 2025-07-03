@@ -38,6 +38,8 @@ namespace genetic_gui
     public:
         GeneticController controller;
 
+        wxBoxSizer  *main_sizer;
+
         wxBoxSizer  *algoplot_sizer;
         wxPanel     *alogplot_panel;
         Plot        *algoplot;

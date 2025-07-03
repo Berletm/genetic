@@ -11,4 +11,4 @@ add_executable(gui_genetic
 )
 
 target_include_directories(gui_genetic PRIVATE ${wxWidgets_INCLUDE_DIRS} include)
-target_link_libraries(gui_genetic PRIVATE ${wxWidgets_LIBRARIES} OpenGL::GL OpenGL::GLU genetic)
+target_link_libraries(gui_genetic PRIVATE ${wxWidgets_LIBRARIES} OpenGL::GL OpenGL::GLU glut genetic)

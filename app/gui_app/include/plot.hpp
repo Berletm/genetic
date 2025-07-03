@@ -45,6 +45,9 @@ class AlgoPlot: public Plot
 {
 protected:
     void RenderData() override;
+    void RenderLegend();
+    void RenderText(float x, float y, const char* text);
+    void RenderLegendText(float legend_x, float legend_y, float legend_width, float legend_height, float text_offset, float line_length, float line_spacing, float line_y_offset);
 public:
     AlgoPlot(wxWindow *parent, GeneticController* ctrl);
 };

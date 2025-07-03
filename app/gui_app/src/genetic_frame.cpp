@@ -14,7 +14,7 @@ namespace genetic_gui
         EVT_MENU(ID_RendSettings, GeneticFrame::RendSettings)
         EVT_MENU(ID_AlgoSettings, GeneticFrame::AlgoSettings)
         EVT_BUTTON(ID_Next, GeneticFrame::Next)
-        EVT_BUTTON(ID_Next, GeneticFrame::Prev)
+        EVT_BUTTON(ID_Prev, GeneticFrame::Prev)
         EVT_BUTTON(ID_Stop, GeneticFrame::Stop)
     END_EVENT_TABLE()
 
@@ -184,7 +184,7 @@ namespace genetic_gui
         settings->Append(rendering_settings);
         settings->Append(algorithm_settings);
 
-        wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
+        main_sizer = new wxBoxSizer(wxHORIZONTAL);
     
         algoplot_sizer = new wxBoxSizer(wxVERTICAL);
         alogplot_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
@@ -209,6 +209,14 @@ namespace genetic_gui
 
     void GeneticFrame::OnTimer(wxTimerEvent&) 
     {
+        if (mean_fitness_history.size() > 0 && std::isnan(mean_fitness_history.back()))
+        {
+            timer.Stop();
+            std::string str = std::format("Error occured, nan fitness value. Stopping algorithm.");
+            statusbar->SetStatusText(str);
+            return;
+        }
+        
         if (best_individ_history.size() > 0 && mean_fitness_history.size() > 0 && algo_settings.verbose)
         {
             std::string str = std::format("Mean fitness: {:.2f} Best fitness: {:.2f}", 

@@ -3,6 +3,7 @@
 
 #include <generator.hpp>
 #include <wx/wx.h>
+#include "shared.hpp"
 
 namespace genetic_gui
 {
@@ -14,13 +15,17 @@ namespace genetic_gui
         genetic::Generation current_generation;
         double mean_fitness;
         double delta_fitness;
+
+        bool is_running;        
+    public:
+        std::vector<HistoryState> undo_history;
+        std::vector<HistoryState> redo_history;
         int current_epoch;
 
-        bool is_running;
-        
-    public:
         inline void AddObserver(wxWindow* observer) {observers.push_back(observer);}
         inline void NotifyObservers() {for (auto obs : observers) {if (obs) obs->Refresh();}}
+        inline void ClearObservers()  {observers.clear();}
+        inline bool CanRedo() const   {return !redo_history.empty();}
 
         GeneticController();
 
@@ -29,6 +34,10 @@ namespace genetic_gui
         inline bool IsRunning() {return this->is_running;}
 
         bool MakeStep();
+
+        bool MakeStepBack();
+
+        bool RedoStep();
     };
 }
 

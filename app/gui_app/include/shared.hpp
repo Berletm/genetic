@@ -90,6 +90,13 @@ namespace genetic_gui
         RendSettingsFrame *rendFrame;
     };
 
+    struct HistoryState 
+    {
+        genetic::Generation           generation;
+        double                        fitness;
+        genetic::Individ              best_individ;
+    };
+
     extern Frames              frames;
     extern RenderingSettings   render_settings;
     extern AlgoSettings        algo_settings;

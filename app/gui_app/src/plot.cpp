@@ -1,5 +1,6 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <GL/glut.h>
 #include <wx/colour.h>
 #include <wx/wx.h>
 #include <wx/sysopt.h>
@@ -27,6 +28,8 @@ namespace genetic_gui
         SetCurrent(context);
         if (render_settings.gl_attribs[0] == WX_GL_SAMPLES) glEnable(GL_MULTISAMPLE);
         else glDisable(GL_MULTISAMPLE);
+
+        this->Refresh();
     }
 
     void Plot::RenderGrid()
@@ -160,8 +163,97 @@ namespace genetic_gui
     END_EVENT_TABLE()
 
     // AlgoPlot
-    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController *ctr) : Plot(parent, ctr)
-    {}
+    AlgoPlot::AlgoPlot(wxWindow *parent, GeneticController *ctr) 
+        : Plot(parent, ctr)
+    {
+        static bool glut_initialized = false;
+        if (!glut_initialized) 
+        {
+            int argc = 0;
+            char* argv[] = { nullptr };
+            glutInit(&argc, argv);
+            glut_initialized = true;
+        }
+    }
+
+    void AlgoPlot::RenderLegend()
+    {
+       if (!render_settings.show_legend) return;
+
+        float legend_width = (x_max - x_min) * 0.25f; 
+        float legend_height = (y_max - y_min) * 0.2f;
+        float padding = (x_max - x_min) * 0.02f;
+
+        float legend_x = x_max - legend_width - padding;
+        float legend_y = y_max - legend_height - padding;
+
+        glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
+        glBegin(GL_QUADS);
+        glVertex2f(legend_x, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y + legend_height);
+        glVertex2f(legend_x, legend_y + legend_height);
+        glEnd();
+
+        glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+        glLineWidth(1.0f);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(legend_x, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y);
+        glVertex2f(legend_x + legend_width, legend_y + legend_height);
+        glVertex2f(legend_x, legend_y + legend_height);
+        glEnd();
+
+        float line_spacing = legend_height * 0.4f; 
+        float line_length = legend_width * 0.3f;   
+        float text_offset = legend_width * 0.05f; 
+        float line_y_offset = legend_height * 0.75f;
+
+        float item1_y = legend_y + line_y_offset;
+        
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        glVertex2f(legend_x + text_offset, item1_y);
+        glVertex2f(legend_x + text_offset + line_length, item1_y);
+        glEnd();
+
+        float item2_y = legend_y + line_y_offset - line_spacing;
+        
+        glColor3f(0.0f, 0.0f, 1.0f);
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        glVertex2f(legend_x + text_offset, item2_y);
+        glVertex2f(legend_x + text_offset + line_length, item2_y);
+        glEnd();
+
+        glLineWidth(1.0f);
+        RenderLegendText(legend_x, legend_y, legend_width, legend_height, text_offset, line_length, line_spacing, line_y_offset);
+    }
+
+    void AlgoPlot::RenderLegendText(float legend_x, float legend_y, float legend_width, float legend_height,
+                                 float text_offset, float line_length, float line_spacing, float line_y_offset)
+    {
+        glColor3f(0.0f, 0.0f, 0.0f);
+        
+        float text_x_world = legend_x + text_offset + line_length + text_offset * 0.5f;
+        float text_y1_world = legend_y + line_y_offset;
+        float text_y2_world = legend_y + line_y_offset - line_spacing;
+        
+        glRasterPos2f(text_x_world, text_y1_world);
+        const char* text1 = "Polynomial";
+        for (const char* c = text1; *c != '\0'; c++) 
+        {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+        }
+        
+        glRasterPos2f(text_x_world, text_y2_world);
+        const char* text2 = "Individual";
+        for (const char* c = text2; *c != '\0'; c++) 
+        {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+        }
+    }
 
     void AlgoPlot::RenderData()
     {
@@ -194,6 +286,7 @@ namespace genetic_gui
             glEnd();
             glLineWidth(1.0f);
         }
+        RenderLegend();
     }
 
     FitnessPlot::FitnessPlot(wxWindow *parent, GeneticController* ctr)

@@ -1,5 +1,4 @@
 #include "genetic_controller.hpp"
-#include "shared.hpp"
 #include <evolution.hpp>
 
 namespace genetic_gui
@@ -12,7 +11,7 @@ namespace genetic_gui
     {}
 
     void GeneticController::InitAlgo()
-    {   
+    {
         is_running = true;
         mean_fitness_history.clear();
         best_individ_history.clear();
@@ -40,6 +39,9 @@ namespace genetic_gui
             return false;
         }
 
+        undo_history.push_back({current_generation, mean_fitness, step});
+
+
         current_generation = genetic::evolution_step(
             poly,
             current_generation,
@@ -61,6 +63,52 @@ namespace genetic_gui
         best_individ_history.push_back(step);
 
         current_epoch += 1;
+
+        redo_history.clear();
+
+        NotifyObservers();
+        return true;
+    }
+
+    bool GeneticController::MakeStepBack()
+    {
+        if (undo_history.empty()) 
+            return false;
+
+        redo_history.push_back({current_generation, mean_fitness, step});
+
+        auto& prev = undo_history.back();
+        current_generation = prev.generation;
+        mean_fitness = prev.fitness;
+        step = prev.best_individ;
+
+        if (!mean_fitness_history.empty()) mean_fitness_history.pop_back();
+        if (!best_individ_history.empty()) best_individ_history.pop_back();
+
+        current_epoch--;
+        undo_history.pop_back();
+
+        NotifyObservers();
+        return true;
+    }
+
+    bool GeneticController::RedoStep()
+    {
+        if (redo_history.empty())
+            return false;
+
+        undo_history.push_back({current_generation, mean_fitness, step});
+
+        auto& next = redo_history.back();
+        current_generation = next.generation;
+        mean_fitness = next.fitness;
+        step = next.best_individ;
+
+        mean_fitness_history.push_back(mean_fitness);
+        best_individ_history.push_back(step);
+
+        current_epoch++;
+        redo_history.pop_back();
 
         NotifyObservers();
         return true;

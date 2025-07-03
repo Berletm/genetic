@@ -15,10 +15,13 @@ namespace genetic_gui
     {
     private:
         // event handlers
+        void RefreshPlots();
         void OnCompute(wxCommandEvent& event);
         void OnNumberInput(wxCommandEvent& event);
         void OnClose(wxCloseEvent& event);
 
+        void ParseTerm(const std::string& term, genetic::Polynomial& poly);
+        double ParseCoefficient(const std::string& coeff_str);
         genetic::Polynomial ParsePoly(const std::string& poly_str);
     public:
         NewFrame(GeneticFrame* frame, wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style);
